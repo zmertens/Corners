@@ -28,6 +28,15 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
+    - name: 'Create env file'
+      run: |
+        touch env.properties
+        echo DB_DATABASE_URL="jdbc:h2:mem:testdb" >> env.properties
+        echo DB_USER="sa" >> env.properties
+        echo DB_PASSWORD="" >> env.properties
+        echo DB_DIALECT="org.hibernate.dialect.H2Dialect" >> env.properties
+        cat env.properties
+
     # Configure Gradle for optimal use in GitHub Actions, including caching of downloaded dependencies.
     # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
     - name: Setup Gradle
