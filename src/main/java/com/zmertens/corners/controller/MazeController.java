@@ -2,10 +2,12 @@ package com.zmertens.corners.controller;
 
 import com.zmertens.corners.domain.Maze;
 import com.zmertens.corners.domain.MazeRepository;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@CrossOrigin
 public class MazeController {
 
     private final MazeRepository mazeRepository;
