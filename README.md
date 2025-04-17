@@ -1,38 +1,88 @@
-# Corners
+# Corners - Maze Management Application
 
-This web service is implementing several Spring libraries like REST data and JPA to store maze-related data.
+## Overview
+Corners is a Node.js and Express web application that allows users to manage mazes stored in a MongoDB database. 
+The mazes are represented as base64 encoded strings, and the application provides a RESTful API for creating, retrieving, updating, and deleting mazes. 
+Additionally, the application integrates a WebAssembly (WASM) module compiled from Emscripten to allow for more portability.
 
-## Payload and API
+## Features
+- RESTful API for maze management:
+  - GET /mazes/ - Retrieve all mazes
+  - POST /maze/ - Create a new maze
+  - DELETE /maze/:id - Delete a maze by ID
+  - PUT /maze/:id - Update a maze by ID
+- Integration with MongoDB for data storage
+- Loading and interaction with a WASM module for enhanced functionality
 
-The payload and APIs for Corners are as follows:
-
-```json
-{
-  "id": 1,
-  "file": "binary_tree1.obj",
-  "width": 100,
-  "height": 10,
-  "length": 100,
-  "seed": 101,
-  "algorithm": "binary_tree"
-}
+## Project Structure
+```
+corners
+├── src
+│   ├── app.ts
+│   ├── controllers
+│   │   ├── corners_endpoints.ts
+│   ├── models
+│   │   └── complex.ts
+│   ├── routes
+│   │   └── navigations.ts
+│   ├── services
+│   │   └── wasmLoader.ts
+│   └── types
+│       └── index.ts
+├── config
+│   └── database.ts
+├── public
+│   └── wasm
+│       └── mazebuilder.wasm
+├── .gitignore
+├── package.json
+├── tsconfig.json
+├── Procfile
+└── README.md
 ```
 
-  * POST /api/mazes
-    * Content-Type: application/json
-  * GET /api/mazes/{id}
-  * PUT /api/mazes/{id}
-    * Content-Type: application/json
-  * DELETE /api/mazes/{id}
+## Setup Instructions
+1. **Clone the repository:**
+   ```
+   git clone <repository-url>
+   cd corners
+   ```
 
-## Build, Run, and Test
-  * Preqrequisites
-    - Java 17
-    - Gradle
-    - MySQL (or another database)
+2. **Install dependencies:**
+   ```
+   npm install
+   ```
 
-`.\gradlew.bat build` OR `./gradlew build`
+3. **Configure the database:**
+   Update the `config/database.ts` file with your MongoDB connection string.
 
-## Run
+4. **Run the application:**
+   ```
+   npm start
+   ```
 
-`.\gradlew.bat bootRun` OR `./gradlew bootRun`
+5. **Access the API:**
+   The API will be available at `http://localhost:3000/mazes`.
+
+## Deployment
+This application is designed to be deployed on Heroku. Ensure you have the Heroku CLI installed and follow these steps:
+1. Create a new Heroku app:
+   ```
+   heroku create <app-name>
+   ```
+
+2. Set up your MongoDB connection string as a Heroku config variable:
+   ```
+   heroku config:set MONGODB_URI=<your-mongodb-uri>
+   ```
+
+3. Deploy the application:
+   ```
+   git push heroku main
+   ```
+
+4. Open the application in your browser:
+   ```
+   heroku open
+   ```
+
