@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const connectDatabase = async () => {
   try {
-    const dbUri = process.env.MONGO_URI || "mongodb://localhost:27017/maze";
+    const dbUri = process.env.MONGO_URI || "mongodb://localhost:27017/corners";
     await mongoose.connect(dbUri, {});
     console.log("Database connected successfully");
   } catch (error) {

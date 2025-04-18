@@ -1,13 +1,13 @@
-import Module from "../../public/mazebuilder.js";
+import Module, { cli, MainModule } from "../../public/mazebuilder.js";
 
-export async function loadWasm(): Promise<any | null> {
+export async function loadWasm(): Promise<cli | null> {
   try {
-    const activeModule = await Module();
+    const activeModule: MainModule = await Module();
     if (activeModule) {
       const ptr = activeModule.get();
       if (ptr) {
         console.log("WASM module loaded successfully");
-        return ptr as any;
+        return ptr;
       } else {
         console.error("Failed to get pointer from WASM module");
       }
