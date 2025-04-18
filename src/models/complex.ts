@@ -1,15 +1,15 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema } from "mongoose";
 
 export interface Complex {
-    id: string;
-    data: string;
+  id: string;
+  data: string;
 }
 
-export interface ComplexDocument extends Complex, Omit<Document, 'id'> {}
+export interface ComplexDocument extends Complex, Omit<Document, "id"> {}
 
 const mazeSchema = new Schema<ComplexDocument>({
-    id: { type: String, required: true, unique: true },
-    data: { type: String, required: true }
+  id: { type: String, required: true, unique: true },
+  data: { type: String, required: true },
 });
 
-export const MazeModel = mongoose.model<ComplexDocument>('Maze', mazeSchema);
+export const MazeModel = mongoose.model<ComplexDocument>("Maze", mazeSchema);

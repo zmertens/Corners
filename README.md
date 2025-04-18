@@ -1,11 +1,13 @@
 # Corners - Maze Management Application
 
 ## Overview
-Corners is a Node.js and Express web application that allows users to manage mazes stored in a MongoDB database. 
-The mazes are represented as base64 encoded strings, and the application provides a RESTful API for creating, retrieving, updating, and deleting mazes. 
+
+Corners is a Node.js and Express web application that allows users to manage mazes stored in a MongoDB database.
+The mazes are represented as base64 encoded strings, and the application provides a RESTful API for creating, retrieving, updating, and deleting mazes.
 Additionally, the application integrates a WebAssembly (WASM) module compiled from Emscripten to allow for more portability.
 
 ## Features
+
 - RESTful API for maze management:
   - GET /mazes/ - Retrieve all mazes
   - POST /maze/ - Create a new maze
@@ -15,6 +17,7 @@ Additionally, the application integrates a WebAssembly (WASM) module compiled fr
 - Loading and interaction with a WASM module for enhanced functionality
 
 ## Project Structure
+
 ```
 corners
 ├── src
@@ -42,13 +45,16 @@ corners
 ```
 
 ## Setup Instructions
+
 1. **Clone the repository:**
+
    ```
    git clone <repository-url>
    cd corners
    ```
 
 2. **Install dependencies:**
+
    ```
    npm install
    ```
@@ -57,6 +63,7 @@ corners
    Update the `config/database.ts` file with your MongoDB connection string.
 
 4. **Run the application:**
+
    ```
    npm start
    ```
@@ -65,18 +72,23 @@ corners
    The API will be available at `http://localhost:3000/mazes`.
 
 ## Deployment
+
 This application is designed to be deployed on Heroku. Ensure you have the Heroku CLI installed and follow these steps:
+
 1. Create a new Heroku app:
+
    ```
    heroku create <app-name>
    ```
 
 2. Set up your MongoDB connection string as a Heroku config variable:
+
    ```
    heroku config:set MONGODB_URI=<your-mongodb-uri>
    ```
 
 3. Deploy the application:
+
    ```
    git push heroku main
    ```
@@ -85,4 +97,3 @@ This application is designed to be deployed on Heroku. Ensure you have the Herok
    ```
    heroku open
    ```
-
