@@ -1,48 +1,43 @@
-# Corners - Maze Management Application
+# Corners
+
+Helper app that provides a login server with REST API and WebAssembly integration. Handles transmitting and receiving data representing a maze. Can generate mazes too.
 
 ## Overview
 
-Corners is a Node.js and Express web application that allows users to manage mazes stored in a MongoDB database.
-The mazes are represented as base64 encoded strings, and the application provides a RESTful API for creating, retrieving, updating, and deleting mazes.
-Additionally, the application integrates a WebAssembly (WASM) module compiled from Emscripten to allow for more portability.
+Corners is a Node.js and Express web application that allows users to manage users and provide utility functions for generating mazes for games and stuff.
+
+The data received consists of username and passwords, and program arguments in JSON format. The data can be utilized to generate mazes as 2D strings. These mazes can be shared with the user(s).
+
+The JSON responses contain representations of 2D mazes that may be base64 encoded strings, and relevant information such as the number of rows, columns, algorithm utilized, and so forth.
+
+Additionally, the application integrates a WebAssembly (WASM) module compiled from Emscripten to allow for more utility.
 
 ## Features
 
-- RESTful API for maze management:
-  - GET /mazes/ - Retrieve all mazes
-  - POST /maze/ - Create a new maze
-  - DELETE /maze/:id - Delete a maze by ID
-  - PUT /maze/:id - Update a maze by ID
+- RESTful API for data management:
+  - Authentication:
+    - POST /register - Create a new user account
+    - POST /login - Login with a username and password
+    - POST /logout - Logout and terminate session
+    - POST /forgot-password - Request password reset token
+    - POST /reset-password - Reset password with token
+  
+  - User Management:
+    - GET /users - Retrieve all users
+    - GET /user/:id - Retrieve a user by id
+    - DELETE /user/:id - Delete a user by id
+  
+  - Maze Operations:
+    - GET /user/mazes - Retrieve all mazes by user
+    - POST /user/maze - Create a new maze
+    - GET /user/maze/:id - Get a specific maze by ID
+    - PUT /user/maze/:id - Update a maze by ID
+    - DELETE /user/maze/:id - Delete a maze by ID
+  
 - Integration with MongoDB for data storage
-- Loading and interaction with a WASM module for enhanced functionality
-
-## Project Structure
-
-```
-corners
-├── src
-│   ├── app.ts
-│   ├── controllers
-│   │   ├── corners_endpoints.ts
-│   ├── models
-│   │   └── complex.ts
-│   ├── routes
-│   │   └── navigations.ts
-│   ├── services
-│   │   └── wasmLoader.ts
-│   └── types
-│       └── index.ts
-├── config
-│   └── database.ts
-├── public
-│   └── wasm
-│       └── mazebuilder.wasm
-├── .gitignore
-├── package.json
-├── tsconfig.json
-├── Procfile
-└── README.md
-```
+- Integration with a WebAssembly module for efficient maze generation
+- JWT token-based authentication
+- Password reset functionality via secure tokens
 
 ## Setup Instructions
 
@@ -60,7 +55,7 @@ corners
    ```
 
 3. **Configure the database:**
-   Update the `config/database.ts` file with your MongoDB connection string.
+   Update the `config/database.ts` file with your local MongoDB connection string.
 
 4. **Run the application:**
 
