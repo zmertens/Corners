@@ -81,6 +81,6 @@ describe('WASM Loader', () => {
 
     // Verify error handling
     expect(result).toBeNull();
-    expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading WASM module:', mockError);
+    expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading WASM module:', mockError.message);
   });
 });

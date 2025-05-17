@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "heroku-postbuild": "npm run build",
-    "start": "nodemon --watch src --ext ts --exec ts-node src/app.ts",
+    "start": "node dist/app.js",
     "dev": "nodemon --watch src --ext ts --exec ts-node src/app.ts",
     "test": "jest",
     "lint": "eslint .",
@@ -27,9 +27,14 @@
   "author": "zmertens",
   "license": "BSD-3-Clause",
   "dependencies": {
+    "@types/cors": "^2.8.18",
     "@types/express": "^5.0.1",
+    "@types/jsonwebtoken": "^9.0.9",
     "@types/mongoose": "^5.11.97",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.13.2"
   },
   "devDependencies": {
