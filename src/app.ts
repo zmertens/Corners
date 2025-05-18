@@ -36,6 +36,7 @@ getWasmInstance()
       try {
         const testMaze = instance.stringify_from_dimens(r, c);
         console.log(`Test maze generation successful: ${r}x${c} maze created`);
+        console.log(testMaze);
       } catch (error) {
         console.error("Test maze generation failed:", error);
       }
