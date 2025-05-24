@@ -16,23 +16,23 @@ Additionally, the application integrates a WebAssembly (WASM) module compiled fr
 
 - RESTful API for data management:
   - Authentication:
-    - POST /register - Create a new user account
-    - POST /login - Login with a username and password
-    - POST /logout - Logout and terminate session
-    - POST /forgot-password - Request password reset token
-    - POST /reset-password - Reset password with token
+    - POST /api/auth/register - Create a new user account
+    - POST /api/auth/login - Login with a username and password
+    - POST /api/auth/logout - Logout and terminate session
+    - POST /api/auth/forgot-password - Request password reset token
+    - POST /api/auth/reset-password - Reset password with token
   
   - User Management:
-    - GET /users - Retrieve all users
-    - GET /user/:id - Retrieve a user by id
-    - DELETE /user/:id - Delete a user by id
+    - GET /api/users - Retrieve all users
+    - GET /api/user/:id - Retrieve a user by id
+    - DELETE /api/user/:id - Delete a user by id
   
   - Maze Operations:
-    - GET /user/mazes - Retrieve all mazes by user
-    - POST /user/maze - Create a new maze
-    - GET /user/maze/:id - Get a specific maze by ID
-    - PUT /user/maze/:id - Update a maze by ID
-    - DELETE /user/maze/:id - Delete a maze by ID
+    - GET /api/user/mazes - Retrieve all mazes by user
+    - POST /api/user/maze - Create a new maze
+    - GET /api/user/maze/:id - Get a specific maze by ID
+    - PUT /api/user/maze/:id - Update a maze by ID
+    - DELETE /api/user/maze/:id - Delete a maze by ID
   
 - Integration with MongoDB for data storage
 - Integration with a WebAssembly module for efficient maze generation
@@ -64,7 +64,7 @@ Additionally, the application integrates a WebAssembly (WASM) module compiled fr
    ```
 
 5. **Access the API:**
-   The API will be available at `http://localhost:3000/mazes`.
+   The API will be available at `http://localhost:3000/api/` endpoints.
 
 ## Deployment
 
