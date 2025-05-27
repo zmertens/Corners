@@ -80,6 +80,18 @@ const server = app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`)
 })
 
+console.log('Registered routes:');
+// Log registered routes safely
+if (app._router && app._router.stack) {
+  app._router.stack.forEach((r: any) => {
+    if (r.route && r.route.path) {
+      console.log(`${Object.keys(r.route.methods).join(', ')} ${r.route.path}`);
+    }
+  });
+} else {
+  console.log('No routes registered or router not initialized');
+}
+
 // Handle graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM received. Shutting down gracefully')

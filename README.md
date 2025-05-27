@@ -1,24 +1,22 @@
 # Corners
 
-Helper app that provides a login server with REST API and WebAssembly integration. Handles transmitting and receiving data representing a maze. Can generate mazes too.
+Corners is a Node.js and Express web application that allows users to manage users. high-scores, and provide utility functions for generating mazes for games and stuff.
 
-## Overview
+The user data consists of username and passwords, scores, and program arguments in JSON format. The user data can be taken to generate mazes in string formats.
 
-Corners is a Node.js and Express web application that allows users to manage users and provide utility functions for generating mazes for games and stuff.
-
-The data received consists of username and passwords, and program arguments in JSON format. The data can be utilized to generate mazes as 2D strings. These mazes can be shared with the user(s).
-
-The JSON responses contain representations of 2D mazes that may be base64 encoded strings, and relevant information such as the number of rows, columns, algorithm utilized, and so forth.
-
-Additionally, the application integrates a WebAssembly (WASM) module compiled from Emscripten to allow for more utility.
+The program arguments are representations of mazes that contain relevant information such as the number of rows, columns, seed, and generating-algorithm.
 
 ## Features
 
 - RESTful API for communication
+  - Provides action verbs for creating and retrieving users
 - Integration with MongoDB for data storage
+  - Persistent storage for user data
 - Integration with a WebAssembly module for efficient and portable utilities
+  - Provides maze-generating library
 - JWT token-based authentication
-- Password reset functionality via secure tokens
+  - Provides secure way to transfer login requests with session info
+  - Password reset functionality via secure tokens
 
 ## Setup Instructions
 

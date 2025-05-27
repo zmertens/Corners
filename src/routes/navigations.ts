@@ -6,7 +6,7 @@ import * as mazeController from '../controllers/mazeController'
 const setNavigations = (app: Application) => {
   // Base route
   app.get('/', (req, res) => {
-    res.send('Hello World!')
+    res.send('** Corners ** Login/Auth services!')
   })
 
   // Auth routes
