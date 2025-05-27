@@ -1,9 +1,9 @@
-import { loadWasm } from "./wasmLoader";
-import { cli } from "../../public/mazebuilder";
-import { WasmModuleInstance } from "../types";
+import { loadWasm } from './wasmLoader'
+import { cli } from '../../public/mazebuilder'
+import { WasmModuleInstance } from '../types'
 
 // Singleton pattern for WASM instance
-let wasmInstance: cli | null = null;
+let wasmInstance: cli | null = null
 
 /**
  * Gets or initializes the WebAssembly instance
@@ -11,10 +11,10 @@ let wasmInstance: cli | null = null;
  */
 export const getWasmInstance = async (): Promise<cli | null> => {
   if (!wasmInstance) {
-    wasmInstance = await loadWasm();
+    wasmInstance = await loadWasm()
   }
-  return wasmInstance;
-};
+  return wasmInstance
+}
 
 /**
  * Generates a maze using the WebAssembly module
@@ -25,27 +25,29 @@ export const getWasmInstance = async (): Promise<cli | null> => {
  * @throws Error if WASM module fails to load
  */
 export const generateMaze = async (
-  rows: number, 
-  columns: number, 
-  algorithm: string = "recursive-backtracker"
+  rows: number,
+  columns: number,
+  algorithm: string = 'recursive-backtracker'
 ): Promise<string> => {
-  const instance = await getWasmInstance();
-  
+  const instance = await getWasmInstance()
+
   if (!instance) {
-    throw new Error("Failed to load WASM module");
+    throw new Error('Failed to load WASM module')
   }
-  
+
   try {
     // Ensure positive dimensions
-    const validRows = Math.max(1, Math.floor(rows));
-    const validColumns = Math.max(1, Math.floor(columns));
-    
+    const validRows = Math.max(1, Math.floor(rows))
+    const validColumns = Math.max(1, Math.floor(columns))
+
     // Call the WASM function to generate the maze
-    return instance.stringify_from_dimens(validRows, validColumns);
+    return instance.stringify_from_dimens(validRows, validColumns)
   } catch (error) {
-    throw new Error(`Maze generation failed: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `Maze generation failed: ${error instanceof Error ? error.message : String(error)}`
+    )
   }
-};
+}
 
 /**
  * Parse a maze string into a 2D array
@@ -53,9 +55,9 @@ export const generateMaze = async (
  * @returns 2D array representation of the maze
  */
 export const parseMaze = (mazeString: string): string[][] => {
-  if (!mazeString) return [];
-  return mazeString.split('\n').map(row => row.split(''));
-};
+  if (!mazeString) return []
+  return mazeString.split('\n').map((row) => row.split(''))
+}
 
 /**
  * Convert a maze from 2D array back to string
@@ -63,6 +65,6 @@ export const parseMaze = (mazeString: string): string[][] => {
  * @returns String representation of the maze
  */
 export const stringifyMaze = (maze: string[][]): string => {
-  if (!maze || !maze.length) return '';
-  return maze.map(row => row.join('')).join('\n');
-};
+  if (!maze || !maze.length) return ''
+  return maze.map((row) => row.join('')).join('\n')
+}

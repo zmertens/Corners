@@ -14,4 +14,4 @@ module.exports = {
     '!src/**/*.d.ts',
     '!src/__tests__/**',
   ],
-};
+}

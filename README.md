@@ -14,28 +14,9 @@ Additionally, the application integrates a WebAssembly (WASM) module compiled fr
 
 ## Features
 
-- RESTful API for data management:
-  - Authentication:
-    - POST /api/auth/register - Create a new user account
-    - POST /api/auth/login - Login with a username and password
-    - POST /api/auth/logout - Logout and terminate session
-    - POST /api/auth/forgot-password - Request password reset token
-    - POST /api/auth/reset-password - Reset password with token
-  
-  - User Management:
-    - GET /api/users - Retrieve all users
-    - GET /api/user/:id - Retrieve a user by id
-    - DELETE /api/user/:id - Delete a user by id
-  
-  - Maze Operations:
-    - GET /api/user/mazes - Retrieve all mazes by user
-    - POST /api/user/maze - Create a new maze
-    - GET /api/user/maze/:id - Get a specific maze by ID
-    - PUT /api/user/maze/:id - Update a maze by ID
-    - DELETE /api/user/maze/:id - Delete a maze by ID
-  
+- RESTful API for communication
 - Integration with MongoDB for data storage
-- Integration with a WebAssembly module for efficient maze generation
+- Integration with a WebAssembly module for efficient and portable utilities
 - JWT token-based authentication
 - Password reset functionality via secure tokens
 
