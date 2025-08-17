@@ -1,5 +1,5 @@
 import { loadWasm } from '../../services/wasmLoader'
-import Module from '../../../public/mazebuilder.js'
+import Module from '../../../public/mazebuildercli'
 
 // Mock the mazebuilder module
 jest.mock('../../../public/mazebuilder.js', () => {

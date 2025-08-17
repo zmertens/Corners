@@ -3,7 +3,7 @@ import dotenv from 'dotenv'
 import cors from 'cors'
 import connectDatabase from './config/database'
 import setNavigations from './routes/navigations'
-import { getWasmInstance } from './services/mazeService'
+import { getWasmModule } from './services/mazeService'
 import { wasmMiddleware } from './middleware/wasm'
 import path from 'path'
 
@@ -25,23 +25,32 @@ app.use(express.static(path.join(__dirname, '..', 'public')))
 connectDatabase()
 
 // Pre-initialize WASM module
-getWasmInstance()
-  .then((instance) => {
-    if (instance) {
-      console.log('WASM module initialized successfully')
+getWasmModule()
+  .then((module) => {
 
-      // Test maze generation
-      const r = 10
-      const c = 10
-      try {
-        const testMaze = instance.stringify_from_dimens(r, c)
-        console.log(`Test maze generation successful: ${r}x${c} maze created`)
-        console.log(testMaze)
-      } catch (error) {
-        console.error('Test maze generation failed:', error)
+    if (module) {
+      const cliPointer = module.get()
+      if (cliPointer) {
+        console.log('WASM module initialized successfully and retrieved pointer')
+
+        // Test maze generation
+        const r = 10
+        const c = 10
+        try {
+          const params = new module.StringVector()
+          params.push_back("-r")
+          params.push_back(`${r}`)
+          params.push_back("-c")
+          params.push_back(`${c}`)
+          const testMaze = cliPointer.convert(params)
+          console.log(`Test maze generation successful: ${r}x${c} maze created`)
+          console.log(testMaze)
+        } catch (error) {
+          console.error('Test maze generation failed:', error)
+        }
+      } else {
+        console.error('Failed to initialize WASM module')
       }
-    } else {
-      console.error('Failed to initialize WASM module')
     }
   })
   .catch((error) => {

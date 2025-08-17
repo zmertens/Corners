@@ -1,18 +1,20 @@
 import { loadWasm } from './wasmLoader'
-import { cli } from '../../public/mazebuilder'
-import { WasmModuleInstance } from '../types'
+import { MainModule } from '../../public/mazebuildercli'
 
 // Singleton pattern for WASM instance
-let wasmInstance: cli | null = null
+let wasmInstance: MainModule | null = null
 
 /**
  * Gets or initializes the WebAssembly instance
  * @returns The initialized WebAssembly instance
  */
-export const getWasmInstance = async (): Promise<cli | null> => {
+export const getWasmModule = async (): Promise<MainModule | null> => {
+
   if (!wasmInstance) {
+
     wasmInstance = await loadWasm()
   }
+
   return wasmInstance
 }
 
@@ -27,12 +29,14 @@ export const getWasmInstance = async (): Promise<cli | null> => {
 export const generateMaze = async (
   rows: number,
   columns: number,
-  algorithm: string = 'recursive-backtracker'
+  algorithm: string = 'dfs'
 ): Promise<string> => {
-  const instance = await getWasmInstance()
 
-  if (!instance) {
-    throw new Error('Failed to load WASM module')
+  const wasmModule: MainModule | null = await getWasmModule()
+
+  if (!wasmModule) {
+
+    throw new Error('Failed to get instance from WASM module')
   }
 
   try {
@@ -40,9 +44,25 @@ export const generateMaze = async (
     const validRows = Math.max(1, Math.floor(rows))
     const validColumns = Math.max(1, Math.floor(columns))
 
+    let sv = new wasmModule.StringVector()
+    sv.push_back("-r")
+    sv.push_back(validRows.toString())
+    sv.push_back("-c")
+    sv.push_back(validColumns.toString())
+    sv.push_back("-a")
+    sv.push_back(algorithm)
+
+    const cliPointer = wasmModule.get()
+
+    if (!cliPointer) {
+
+      throw new Error('Failed to get instance from WASM module')
+    }
+
     // Call the WASM function to generate the maze
-    return instance.stringify_from_dimens(validRows, validColumns)
+    return cliPointer.convert(sv)
   } catch (error) {
+
     throw new Error(
       `Maze generation failed: ${error instanceof Error ? error.message : String(error)}`
     )

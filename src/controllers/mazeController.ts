@@ -1,7 +1,8 @@
 import { Request, Response } from 'express'
 import { MazeModel, Maze } from '../models/maze'
 import { generateMaze } from '../services/mazeService'
-import { AuthRequest } from '../types'
+import { AuthRequest } from '../types/index'
+import { StringVector } from '../../public/mazebuildercli'
 import { UserDocument } from '../models/user'
 
 /**
@@ -28,14 +29,16 @@ export const createMaze = async (
     }
 
     try {
-      let mazeData: string
+      let mazeData: string | undefined
 
       // Try using WASM instance from request if available (faster)
-      if (req.wasmInstance) {
-        mazeData = req.wasmInstance.stringify_from_dimens(
-          parseInt(rows, 10),
-          parseInt(columns, 10)
-        )
+      if (req.wasmModule) {
+        var sv = new req.wasmModule.StringVector()
+        sv.push_back("-r")
+        sv.push_back(parseInt(rows, 10).toString())
+        sv.push_back("-c")
+        sv.push_back(parseInt(columns, 10).toString())
+        mazeData = req.wasmModule.get()?.convert(sv)
       } else {
         // Fall back to service if not available
         mazeData = await generateMaze(

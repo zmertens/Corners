@@ -9,7 +9,7 @@ import {
   updateMaze,
   deleteMaze,
 } from '../../controllers/mazeController'
-import { AuthRequest } from '../../types'
+import { AuthRequest } from '../../types/index'
 
 // Mock dependencies
 jest.mock('../../models/maze')
@@ -53,13 +53,15 @@ describe('Maze Controller', () => {
       }
 
       // Mock WASM instance
-      mockRequest.wasmInstance = {
-        stringify_from_dimens: jest.fn().mockReturnValue('mock maze data'),
-        isAliasOf: jest.fn(),
-        delete: jest.fn(),
-        deleteLater: jest.fn(),
-        isDeleted: jest.fn(),
-        clone: jest.fn(),
+      mockRequest.wasmModule = {
+        _main: jest.fn(),
+        cli: jest.fn(),
+        StringVector: jest.fn().mockReturnValue({
+          push_back: jest.fn(),
+        }),
+        get: jest.fn().mockReturnValue({
+          convert: jest.fn().mockReturnValue('mock maze data'),
+        })
       }
 
       // Mock maze creation
@@ -79,7 +81,7 @@ describe('Maze Controller', () => {
 
       // Assertions
       expect(
-        mockRequest.wasmInstance?.stringify_from_dimens
+        mockRequest.wasmModule?.get()?.convert
       ).toHaveBeenCalledWith(10, 10)
       expect(MazeModel.create).toHaveBeenCalledWith({
         id: expect.any(String),
@@ -111,7 +113,7 @@ describe('Maze Controller', () => {
       }
 
       // Remove WASM instance
-      mockRequest.wasmInstance = undefined
+      mockRequest.wasmModule = undefined
 
       // Mock generateMaze service
       ;(mazeService.generateMaze as jest.Mock).mockResolvedValue(

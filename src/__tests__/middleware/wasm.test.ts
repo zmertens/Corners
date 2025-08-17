@@ -37,7 +37,7 @@ describe('WASM Middleware', () => {
     const mockWasmInstance = {
       stringify_from_dimens: jest.fn().mockReturnValue('mock maze data'),
     }
-    ;(mazeService.getWasmInstance as jest.Mock).mockResolvedValue(
+    ;(mazeService.getWasmModule as jest.Mock).mockResolvedValue(
       mockWasmInstance
     )
 
@@ -49,15 +49,15 @@ describe('WASM Middleware', () => {
     )
 
     // Assertions
-    expect(mazeService.getWasmInstance).toHaveBeenCalled()
-    expect(mockRequest.wasmInstance).toBe(mockWasmInstance)
+    expect(mazeService.getWasmModule).toHaveBeenCalled()
+    expect(mockRequest.wasmModule).toBe(mockWasmInstance)
     expect(mockNext).toHaveBeenCalled()
     expect(consoleWarnSpy).not.toHaveBeenCalled()
   })
 
   it('should proceed without WASM instance when loading fails', async () => {
     // Mock failed WASM instance loading
-    ;(mazeService.getWasmInstance as jest.Mock).mockResolvedValue(null)
+    ;(mazeService.getWasmModule as jest.Mock).mockResolvedValue(null)
 
     // Call middleware
     await wasmMiddleware(
@@ -67,7 +67,7 @@ describe('WASM Middleware', () => {
     )
 
     // Assertions
-    expect(mazeService.getWasmInstance).toHaveBeenCalled()
+    expect(mazeService.getWasmModule).toHaveBeenCalled()
     // expect(mockRequest.wasmInstance).toBeUndefined();
     expect(mockNext).toHaveBeenCalled()
     expect(consoleWarnSpy).toHaveBeenCalledWith(
@@ -78,7 +78,7 @@ describe('WASM Middleware', () => {
   it('should handle exceptions and proceed', async () => {
     // Mock exception when loading WASM
     const mockError = new Error('Test error')
-    ;(mazeService.getWasmInstance as jest.Mock).mockRejectedValue(mockError)
+    ;(mazeService.getWasmModule as jest.Mock).mockRejectedValue(mockError)
 
     // Call middleware
     await wasmMiddleware(
@@ -88,8 +88,8 @@ describe('WASM Middleware', () => {
     )
 
     // Assertions
-    expect(mazeService.getWasmInstance).toHaveBeenCalled()
-    expect(mockRequest.wasmInstance).toBeUndefined()
+    expect(mazeService.getWasmModule).toHaveBeenCalled()
+    expect(mockRequest.wasmModule).toBeUndefined()
     expect(mockNext).toHaveBeenCalled()
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       'WASM middleware error:',
