@@ -34,8 +34,8 @@ getWasmModule()
         console.log('WASM module initialized successfully and retrieved pointer')
 
         // Test maze generation
-        const r = 10
-        const c = 10
+        const r = "10"
+        const c = "10"
         try {
           const params = new module.StringVector()
           params.push_back("-r")
@@ -45,6 +45,16 @@ getWasmModule()
           const testMaze = cliPointer.convert(params)
           console.log(`Test maze generation successful: ${r}x${c} maze created`)
           console.log(testMaze)
+
+          params.delete();
+          
+          // Create a new StringVector for help command
+          const helpParams = new module.StringVector();
+          helpParams.push_back("-h");
+          const helpMessage = cliPointer.convert(helpParams);
+          console.log("Help message from WASM module:");
+          console.log(helpMessage);
+          helpParams.delete();
         } catch (error) {
           console.error('Test maze generation failed:', error)
         }

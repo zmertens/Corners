@@ -50,7 +50,7 @@ jest.mock('../services/wasmLoader', () => {
   return {
     loadWasm: jest.fn().mockImplementation(() => {
       return Promise.resolve({
-        stringify_from_dimens: (r: number, c: number): string =>
+        convert: (r: number, c: number): string =>
           `mock maze ${r}x${c}`,
       })
     }),

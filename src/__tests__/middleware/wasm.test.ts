@@ -35,7 +35,7 @@ describe('WASM Middleware', () => {
   it('should attach WASM instance to request when loaded successfully', async () => {
     // Mock successful WASM instance loading
     const mockWasmInstance = {
-      stringify_from_dimens: jest.fn().mockReturnValue('mock maze data'),
+      convert: jest.fn().mockReturnValue('mock maze data'),
     }
     ;(mazeService.getWasmModule as jest.Mock).mockResolvedValue(
       mockWasmInstance

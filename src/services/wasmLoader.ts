@@ -18,7 +18,14 @@ export async function loadWasm(): Promise<MainModule | null> {
       return null
     }
 
+    // Validate that StringVector is available
+    if (!activeModule.StringVector) {
+      console.error('StringVector not available in WASM module')
+      return null
+    }
+
     console.log('WASM module loaded successfully')
+    console.log('StringVector available:', typeof activeModule.StringVector)
 
     return activeModule
 

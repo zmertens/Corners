@@ -44,7 +44,7 @@ export const generateMaze = async (
     const validRows = Math.max(1, Math.floor(rows))
     const validColumns = Math.max(1, Math.floor(columns))
 
-    let sv = new wasmModule.StringVector()
+    const sv = new wasmModule.StringVector()
     sv.push_back("-r")
     sv.push_back(validRows.toString())
     sv.push_back("-c")
@@ -55,12 +55,14 @@ export const generateMaze = async (
     const cliPointer = wasmModule.get()
 
     if (!cliPointer) {
-
+      sv.delete() // Clean up before throwing
       throw new Error('Failed to get instance from WASM module')
     }
 
     // Call the WASM function to generate the maze
-    return cliPointer.convert(sv)
+    const result = cliPointer.convert(sv)
+    sv.delete() // Clean up the StringVector
+    return result
   } catch (error) {
 
     throw new Error(

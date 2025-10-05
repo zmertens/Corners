@@ -5,9 +5,9 @@
 jest.setTimeout(10000)
 
 // Mock the WASM module import
-jest.mock('../../public/mazebuilder.js', () => {
+jest.mock('../../public/mazebuildercli.js', () => {
   const mockCliInstance = {
-    stringify_from_dimens: jest
+    convert: jest
       .fn()
       .mockImplementation(
         (rows: number, cols: number) =>

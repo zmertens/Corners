@@ -14,7 +14,10 @@ export interface ClassHandle {
   clone(): this;
 }
 export interface cli extends ClassHandle {
+  help(): string;
+  version(): string;
   convert(_0: StringVector): string;
+  convert_as_base64(_0: StringVector): string;
 }
 
 export interface StringVector extends ClassHandle {

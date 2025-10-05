@@ -2,7 +2,7 @@ import { loadWasm } from '../../services/wasmLoader'
 import Module from '../../../public/mazebuildercli'
 
 // Mock the mazebuilder module
-jest.mock('../../../public/mazebuilder.js', () => {
+jest.mock('../../../public/mazebuildercli.js', () => {
   return jest.fn()
 })
 
@@ -34,7 +34,7 @@ describe('WASM Loader', () => {
 
     const mockModule = {
       get: mockGet,
-      stringify_from_dimens: mockStringifyFromDimens,
+      convert: mockStringifyFromDimens,
     }
 
     ;(Module as jest.Mock).mockResolvedValue(mockModule)
