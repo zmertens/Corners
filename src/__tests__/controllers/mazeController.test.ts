@@ -99,6 +99,7 @@ describe('Maze Controller', () => {
       ;(mockApiRequest as any).wasmModule = {
         StringVector: jest.fn().mockReturnValue({
           push_back: jest.fn(),
+          delete: jest.fn(),
         }),
         get: jest.fn().mockReturnValue({
           convert_as_base64: jest.fn().mockReturnValue('mock maze data'),
