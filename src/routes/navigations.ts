@@ -6,7 +6,7 @@ import * as mazeController from '../controllers/mazeController'
 const setNavigations = (app: Application) => {
   // Base route
   app.get('/', (req, res) => {
-    res.send('** Corners ** Login/Auth services!')
+    res.send('** Corners ** Maze building services!')
   })
 
   // Test route to check WASM middleware
