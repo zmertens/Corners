@@ -3,7 +3,7 @@ import dotenv from 'dotenv'
 import cors from 'cors'
 import connectDatabase from './config/database'
 import setNavigations from './routes/navigations'
-import { getWasmModule } from './services/mazeService'
+import { getWasmModule } from './services/wasmLoader'
 import { wasmMiddleware } from './middleware/wasm'
 import path from 'path'
 

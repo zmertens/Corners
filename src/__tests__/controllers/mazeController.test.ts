@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
-import mongoose from 'mongoose'
+import mongoose, { version } from 'mongoose'
 import { MazeModel } from '../../models/maze'
-import * as mazeService from '../../services/mazeService'
+
 import {
   createMazeAPI,
 } from '../../controllers/mazeController'
@@ -44,7 +44,8 @@ jest.mock('../../models/maze', () => ({
     findByIdAndDelete: jest.fn(),
   },
 }))
-jest.mock('../../services/mazeService')
+
+jest.mock('../../services/wasmLoader')
 
 const mockedMazeModel = MazeModel as jest.Mocked<typeof MazeModel>
 
@@ -100,7 +101,8 @@ describe('Maze Controller', () => {
           push_back: jest.fn(),
         }),
         get: jest.fn().mockReturnValue({
-          convert: jest.fn().mockReturnValue('mock maze data'),
+          convert_as_base64: jest.fn().mockReturnValue('mock maze data'),
+          version: jest.fn().mockReturnValue('mock version'),
         }),
       }
 
@@ -113,30 +115,6 @@ describe('Maze Controller', () => {
         data: expect.any(String), // base64 encoded data
         createdAt: expect.any(String), // ISO timestamp
         version_str: expect.any(String), // version from package.json
-      })
-    })
-
-    it('should fall back to maze service when WASM is not available', async () => {
-      // Setup request data
-      mockApiRequest.body = {
-        algo: 'recursive_backtracker',
-        rows: 50,
-        columns: 50,
-      }
-
-      // Mock maze service
-      ;(mazeService.generateMaze as jest.Mock).mockResolvedValue('service maze data')
-
-      // Call controller function
-      await createMazeAPI(mockApiRequest as Request, mockResponse as Response)
-
-      // Assertions
-      expect(mazeService.generateMaze).toHaveBeenCalledWith(50, 50, 'recursive_backtracker')
-      expect(mockResponse.status).toHaveBeenCalledWith(201)
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        data: expect.any(String), // base64 encoded data
-        createdAt: expect.any(String),
-        version_str: expect.any(String),
       })
     })
 

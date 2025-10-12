@@ -1,8 +1,6 @@
 import { Request, Response } from 'express'
 import { MazeModel, Maze } from '../models/maze'
-import { generateMaze } from '../services/mazeService'
 import { AuthRequest } from '../types/index'
-import { StringVector } from '../../public/mazebuildercli'
 import { UserDocument } from '../models/user'
 
 /**
@@ -223,6 +221,7 @@ export const createMazeAPI = async (
 
     try {
       let mazeData: string | undefined
+      let mazeBuilderCliVersion: string | undefined
 
       // Use WASM module if available on request object
       if ((req as any).wasmModule) {
@@ -245,35 +244,34 @@ export const createMazeAPI = async (
           sv.push_back(numSeed.toString())
         }
         
-        mazeData = wasmModule.get()?.convert(sv)
-      } else {
-        // Fall back to service
-        mazeData = await generateMaze(numRows, numColumns, algo)
+        mazeData = wasmModule.get()?.convert_as_base64(sv)
+
+        mazeBuilderCliVersion = wasmModule.get()?.version() || "unknown version"
       }
 
       if (!mazeData) {
+
         res.status(500).json({ error: 'Failed to generate maze data' })
+
         return
       }
 
-      // Convert maze data to base64
-      const base64Data = Buffer.from(mazeData).toString('base64')
-
-      // Get package version for version_str
-      const packageJson = require('../../package.json')
-      const versionStr = packageJson.version || '1.0.0'
-
       res.status(201).json({
-        data: base64Data,
+        data: mazeData,
         createdAt: new Date().toISOString(),
-        version_str: versionStr,
+        version_str: mazeBuilderCliVersion,
       })
+
     } catch (wasmError) {
+
       console.error('WASM maze generation error:', wasmError)
+
       res.status(500).json({ error: 'Failed to generate maze' })
     }
   } catch (error) {
+
     console.error('Create maze API error:', error)
+
     res.status(500).json({ error: 'Server error' })
   }
 }

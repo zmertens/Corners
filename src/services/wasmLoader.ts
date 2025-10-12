@@ -1,5 +1,8 @@
 import Module, { MainModule } from '../../public/mazebuildercli'
 
+// Singleton pattern for WASM instance
+let wasmInstance: MainModule | null = null
+
 /**
  * Loads the WebAssembly module and returns the CLI interface
  *
@@ -32,7 +35,7 @@ export async function loadWasm(): Promise<MainModule | null> {
     return activeModule
 
   } catch (error) {
-    
+
     console.error(
       'Error loading WASM module:',
       error instanceof Error ? error.message : String(error)
@@ -40,4 +43,17 @@ export async function loadWasm(): Promise<MainModule | null> {
 
     return null
   }
+}
+
+/**
+ * Gets or initializes the WebAssembly instance
+ * @returns The initialized WebAssembly instance
+ */
+export const getWasmModule = async (): Promise<MainModule | null> => {
+  if (!wasmInstance) {
+    
+    wasmInstance = await loadWasm()
+  }
+
+  return wasmInstance
 }

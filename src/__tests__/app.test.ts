@@ -87,7 +87,7 @@ jest.mock('../services/wasmLoader', () => {
   }
 })
 
-jest.mock('../services/mazeService', () => ({
+jest.mock('../services/wasmLoader', () => ({
   getWasmModule: jest.fn().mockImplementation(() => {
     const mockStringVector = jest.fn().mockImplementation(() => ({
       push_back: jest.fn(),
@@ -175,7 +175,7 @@ describe('Express App', () => {
 
   it('should initialize WASM module without errors', async () => {
     // Get the mock before importing the app
-    const { getWasmModule } = require('../services/mazeService')
+    const { getWasmModule } = require('../services/wasmLoader')
     
     // Import app to trigger initialization
     jest.isolateModules(() => {

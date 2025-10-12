@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
-import { getWasmModule } from '../services/mazeService'
+import { getWasmModule } from '../services/wasmLoader'
 import { AuthRequest } from '../types'
 
 /**
@@ -16,6 +16,7 @@ export const wasmMiddleware = async (
     const mod = await getWasmModule()
 
     if (!mod) {
+
       console.warn('WASM middleware: Failed to load WASM module')
     }
 
@@ -24,6 +25,7 @@ export const wasmMiddleware = async (
 
     next()
   } catch (error) {
+    
     console.error('WASM middleware error:', error)
     // Continue even if WASM fails to load
     next()

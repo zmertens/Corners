@@ -1,10 +1,10 @@
 import { Response, NextFunction } from 'express'
 import { wasmMiddleware } from '../../middleware/wasm'
-import * as mazeService from '../../services/mazeService'
+import * as mazeService from '../../services/wasmLoader'
 import { AuthRequest } from '../../types'
 
 // Mock dependencies
-jest.mock('../../services/mazeService', () => ({
+jest.mock('../../services/wasmLoader', () => ({
 
   getWasmModule: jest.fn(),
 }))
