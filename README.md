@@ -1,43 +1,31 @@
 # Corners
 
-Helper app that provides a login server with REST API and WebAssembly integration. Handles transmitting and receiving data representing a maze. Can generate mazes too.
+Corners is a Node.js and Express web application that provides endpoints for creating mazes.
 
-## Overview
+- POST or PUT `/api/mazes/create`
 
-Corners is a Node.js and Express web application that allows users to manage users and provide utility functions for generating mazes for games and stuff.
-
-The data received consists of username and passwords, and program arguments in JSON format. The data can be utilized to generate mazes as 2D strings. These mazes can be shared with the user(s).
-
-The JSON responses contain representations of 2D mazes that may be base64 encoded strings, and relevant information such as the number of rows, columns, algorithm utilized, and so forth.
-
-Additionally, the application integrates a WebAssembly (WASM) module compiled from Emscripten to allow for more utility.
+```json
+{
+  "algo": "binary_tree",
+  "seed": 10,
+  "rows": 100,
+  "columns": 100
+}
+```
 
 ## Features
 
-- RESTful API for data management:
-  - Authentication:
-    - POST /register - Create a new user account
-    - POST /login - Login with a username and password
-    - POST /logout - Logout and terminate session
-    - POST /forgot-password - Request password reset token
-    - POST /reset-password - Reset password with token
-  
-  - User Management:
-    - GET /users - Retrieve all users
-    - GET /user/:id - Retrieve a user by id
-    - DELETE /user/:id - Delete a user by id
-  
-  - Maze Operations:
-    - GET /user/mazes - Retrieve all mazes by user
-    - POST /user/maze - Create a new maze
-    - GET /user/maze/:id - Get a specific maze by ID
-    - PUT /user/maze/:id - Update a maze by ID
-    - DELETE /user/maze/:id - Delete a maze by ID
-  
+- RESTful API `/api/mazes/`
+
 - Integration with MongoDB for data storage
-- Integration with a WebAssembly module for efficient maze generation
-- JWT token-based authentication
-- Password reset functionality via secure tokens
+- Integration with the [Maze Builder](https://github.com/zmertens/MazeBuilder) WebAssembly module
+
+  - Efficient JavaScript layer around a C++ library
+  - Provides maze-generating functions
+
+- @TODO Socket based UDP connections for real-time data transfers
+
+- @TODO CRON job that works to provide maze data automatically
 
 ## Setup Instructions
 
@@ -55,7 +43,7 @@ Additionally, the application integrates a WebAssembly (WASM) module compiled fr
    ```
 
 3. **Configure the database:**
-   Update the `config/database.ts` file with your local MongoDB connection string.
+   Update the `config/database.ts` file with your local MongoDB connection string if needed.
 
 4. **Run the application:**
 
@@ -64,7 +52,7 @@ Additionally, the application integrates a WebAssembly (WASM) module compiled fr
    ```
 
 5. **Access the API:**
-   The API will be available at `http://localhost:3000/mazes`.
+   The API will be available at `http://localhost:3000/api/` endpoints.
 
 ## Deployment
 

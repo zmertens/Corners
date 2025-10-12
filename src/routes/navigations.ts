@@ -1,44 +1,61 @@
-import { Application } from "express";
-import { authenticate } from "../middleware/auth";
-import * as authController from "../controllers/authController";
-import * as mazeController from "../controllers/mazeController";
+import { Application } from 'express'
+import { authenticate } from '../middleware/auth'
+import * as authController from '../controllers/authController'
+import * as mazeController from '../controllers/mazeController'
 
 const setNavigations = (app: Application) => {
   // Base route
-  app.get("/", (req, res) => {
-    res.send("Welcome to Corners API");
-  });
+  app.get('/', (req, res) => {
+    res.send('** Corners ** Maze building services!')
+  })
+
+  // Test route to check WASM middleware
+  app.get('/api/test-wasm', (req: any, res) => {
+    const hasWasm = !!req.wasmModule
+    res.json({
+      hasWasmModule: hasWasm,
+      wasmModuleKeys: req.wasmModule ? Object.keys(req.wasmModule) : [],
+      message: hasWasm ? 'WASM module available' : 'WASM module not available'
+    })
+  })
 
   // Auth routes
-  app.post("/login", (req, res, next) => {
-    Promise.resolve(authController.login(req, res)).catch(next);
-  });
-  app.post("/logout", authController.logout);
-  app.post("/register", (req, res, next) => {
-    Promise.resolve(authController.register(req, res)).catch(next);
-  });
-  app.post("/forgot-password", (req, res, next) => {
-    Promise.resolve(authController.forgotPassword(req, res)).catch(next);
-  });
-  app.post("/reset-password", (req, res, next) => {
-    Promise.resolve(authController.resetPassword(req, res)).catch(next);
-  });
+  app.post('/api/auth/login', (req, res, next) => {
+    Promise.resolve(authController.login(req, res)).catch(next)
+  })
 
-  // Maze routes - these need to come before more generic user/:id routes to avoid conflicts
-  app.get("/user/mazes", authenticate as any, mazeController.getUserMazes);
-  app.post("/user/maze", authenticate as any, mazeController.createMaze);
-  app.get("/user/maze/:id", authenticate as any, mazeController.getMazeById);
-  app.put("/user/maze/:id", authenticate as any, mazeController.updateMaze);
-  app.delete("/user/maze/:id", authenticate as any, mazeController.deleteMaze);
+  app.post('/api/auth/logout', authController.logout)
+
+  app.post('/api/auth/register', (req, res, next) => {
+    Promise.resolve(authController.register(req, res)).catch(next)
+  })
+
+  app.post('/api/auth/forgot-password', (req, res, next) => {
+    Promise.resolve(authController.forgotPassword(req, res)).catch(next)
+  })
+
+  app.post('/api/auth/reset-password', (req, res, next) => {
+    Promise.resolve(authController.resetPassword(req, res)).catch(next)
+  })
+
+  // API endpoint for maze creation (public endpoint)
+  app.post('/api/mazes/create', (req, res, next) => {
+    Promise.resolve(mazeController.createMazeAPI(req, res)).catch(next)
+  })
+
+  app.put('/api/mazes/create', (req, res, next) => {
+    Promise.resolve(mazeController.createMazeAPI(req, res)).catch(next)
+  })
 
   // User routes
-  app.get("/users", authenticate as any, authController.getAllUsers);
-  app.get("/user/:id", authenticate as any, (req, res, next) => {
-    Promise.resolve(authController.getUserById(req, res)).catch(next);
-  });
-  app.delete("/user/:id", authenticate as any, (req, res, next) => {
-    Promise.resolve(authController.deleteUser(req, res)).catch(next);
-  });
-};
+  app.get('/api/users', authenticate as any, authController.getAllUsers)
+  app.get('/api/user/:id', authenticate as any, (req, res, next) => {
+    Promise.resolve(authController.getUserById(req, res)).catch(next)
+  })
 
-export default setNavigations;
+  app.delete('/api/user/:id', authenticate as any, (req, res, next) => {
+    Promise.resolve(authController.deleteUser(req, res)).catch(next)
+  })
+}
+
+export default setNavigations

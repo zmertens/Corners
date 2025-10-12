@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
-import { getWasmInstance } from '../services/mazeService';
-import { AuthRequest } from '../types';
+import { Request, Response, NextFunction } from 'express'
+import { getWasmModule } from '../services/wasmLoader'
+import { AuthRequest } from '../types'
 
 /**
  * Middleware that attaches the WASM instance to the request object
@@ -13,19 +13,22 @@ export const wasmMiddleware = async (
 ): Promise<void> => {
   try {
     // Get or initialize WASM instance
-    const wasmInstance = await getWasmInstance();
-    
-    if (!wasmInstance) {
-      console.warn('WASM middleware: Failed to load WASM module');
+    const mod = await getWasmModule()
+
+    if (!mod) {
+      console.warn('WASM middleware: Failed to load WASM module')
+    } else {
+      console.log('WASM middleware: Module loaded successfully, attaching to request')
+      console.log('WASM middleware: Available methods:', Object.keys(mod))
     }
-    
+
     // Attach the instance to the request object
-    req.wasmInstance = wasmInstance === null ? undefined : wasmInstance;
-    
-    next();
+    req.wasmModule = mod === null ? undefined : mod
+
+    next()
   } catch (error) {
-    console.error('WASM middleware error:', error);
+    console.error('WASM middleware error:', error)
     // Continue even if WASM fails to load
-    next();
+    next()
   }
-};
+}
