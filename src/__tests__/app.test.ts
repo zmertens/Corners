@@ -60,34 +60,29 @@ jest.mock('express', () => {
 })
 
 // Mock these modules to prevent actual execution
-jest.mock('../services/wasmLoader', () => {
-  return {
-    loadWasm: jest.fn().mockImplementation(() => {
-      // Create a mock that matches the actual WASM module structure
-      const mockStringVector = jest.fn().mockImplementation(() => ({
-        push_back: jest.fn(),
-        delete: jest.fn(),
-      }))
-
-      const mockCli = {
-        convert: jest.fn().mockReturnValue('mock maze data'),
-        convert_as_base64: jest.fn().mockReturnValue('bW9jayBtYXplIGRhdGE='), // "mock maze data" in base64
-        help: jest.fn().mockReturnValue('mock help message'),
-        version: jest.fn().mockReturnValue('mock version'),
-      }
-
-      return Promise.resolve({
-        get: jest.fn().mockReturnValue(mockCli),
-        StringVector: mockStringVector,
-        cli: {},
-        _main: jest.fn(),
-        calledRun: true,
-      })
-    }),
-  }
-})
-
 jest.mock('../services/wasmLoader', () => ({
+  loadWasm: jest.fn().mockImplementation(() => {
+    // Create a mock that matches the actual WASM module structure
+    const mockStringVector = jest.fn().mockImplementation(() => ({
+      push_back: jest.fn(),
+      delete: jest.fn(),
+    }))
+
+    const mockCli = {
+      convert: jest.fn().mockReturnValue('mock maze data'),
+      convert_as_base64: jest.fn().mockReturnValue('bW9jayBtYXplIGRhdGE='), // "mock maze data" in base64
+      help: jest.fn().mockReturnValue('mock help message'),
+      version: jest.fn().mockReturnValue('mock version'),
+    }
+
+    return Promise.resolve({
+      get: jest.fn().mockReturnValue(mockCli),
+      StringVector: mockStringVector,
+      cli: {},
+      _main: jest.fn(),
+      calledRun: true,
+    })
+  }),
   getWasmModule: jest.fn().mockImplementation(() => {
     const mockStringVector = jest.fn().mockImplementation(() => ({
       push_back: jest.fn(),
@@ -109,7 +104,6 @@ jest.mock('../services/wasmLoader', () => ({
       calledRun: true,
     })
   }),
-  generateMaze: jest.fn().mockImplementation(() => Promise.resolve('mock maze data')),
 }))
 
 jest.mock('../config/database', () => jest.fn())

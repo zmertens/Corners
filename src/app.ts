@@ -24,11 +24,11 @@ app.use(express.static(path.join(__dirname, '..', 'public')))
 // Connect to database
 connectDatabase()
 
-// Set up routes first
-setNavigations(app)
-
-// Apply WASM middleware
+// Apply WASM middleware BEFORE routes
 app.use(wasmMiddleware)
+
+// Set up routes after middleware
+setNavigations(app)
 
 // Pre-initialize WASM module
 getWasmModule()

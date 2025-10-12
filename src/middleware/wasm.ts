@@ -16,8 +16,10 @@ export const wasmMiddleware = async (
     const mod = await getWasmModule()
 
     if (!mod) {
-
       console.warn('WASM middleware: Failed to load WASM module')
+    } else {
+      console.log('WASM middleware: Module loaded successfully, attaching to request')
+      console.log('WASM middleware: Available methods:', Object.keys(mod))
     }
 
     // Attach the instance to the request object
@@ -25,7 +27,6 @@ export const wasmMiddleware = async (
 
     next()
   } catch (error) {
-    
     console.error('WASM middleware error:', error)
     // Continue even if WASM fails to load
     next()

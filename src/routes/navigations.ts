@@ -6,7 +6,17 @@ import * as mazeController from '../controllers/mazeController'
 const setNavigations = (app: Application) => {
   // Base route
   app.get('/', (req, res) => {
-    res.send('** Corners ** Maze building services!')
+    res.send('** Corners ** Login/Auth services!')
+  })
+
+  // Test route to check WASM middleware
+  app.get('/api/test-wasm', (req: any, res) => {
+    const hasWasm = !!req.wasmModule
+    res.json({
+      hasWasmModule: hasWasm,
+      wasmModuleKeys: req.wasmModule ? Object.keys(req.wasmModule) : [],
+      message: hasWasm ? 'WASM module available' : 'WASM module not available'
+    })
   })
 
   // Auth routes

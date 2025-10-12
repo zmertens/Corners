@@ -193,7 +193,7 @@ export const deleteMaze = async (
  * Returns data as base64 string with timestamp and version
  */
 export const createMazeAPI = async (
-  req: Request,
+  req: AuthRequest,
   res: Response
 ): Promise<void> => {
   try {
@@ -224,32 +224,45 @@ export const createMazeAPI = async (
       let mazeBuilderCliVersion: string | undefined
 
       // Use WASM module if available on request object
-      if ((req as any).wasmModule) {
-        const wasmModule = (req as any).wasmModule
-        const sv = new wasmModule.StringVector()
-        sv.push_back('-r')
-        sv.push_back(numRows.toString())
-        sv.push_back('-c')
-        sv.push_back(numColumns.toString())
+      if (req.wasmModule) {
+        const wasmModule = req.wasmModule
         
-        // Add algorithm parameter if supported by WASM
-        if (algo) {
-          sv.push_back('-a')
-          sv.push_back(algo)
+        // Check if the module has the expected structure
+        if (wasmModule.StringVector && wasmModule.get) {
+          const sv = new wasmModule.StringVector()
+          sv.push_back('-r')
+          sv.push_back(numRows.toString())
+          sv.push_back('-c')
+          sv.push_back(numColumns.toString())
+          
+          // Add algorithm parameter if supported by WASM
+          if (algo) {
+            sv.push_back('-a')
+            sv.push_back(algo)
+          }
+          
+          // Add seed parameter if provided
+          if (numSeed !== undefined) {
+            sv.push_back('-s')
+            sv.push_back(numSeed.toString())
+          }
+          
+          const cliInstance = wasmModule.get()
+          if (cliInstance && cliInstance.convert_as_base64) {
+            mazeData = cliInstance.convert_as_base64(sv)
+            mazeBuilderCliVersion = cliInstance.version ? cliInstance.version() : "unknown version"
+          }
+          
+          // Clean up
+          sv.delete()
+        } else {
+          console.warn('WASM module missing expected methods (StringVector or get)')
         }
-        
-        // Add seed parameter if provided
-        if (numSeed !== undefined) {
-          sv.push_back('-s')
-          sv.push_back(numSeed.toString())
-        }
-        
-        mazeData = wasmModule.get()?.convert_as_base64(sv)
+      } else {
+        console.warn('WASM module not available on request object')
+      }      if (!mazeData) {
 
-        mazeBuilderCliVersion = wasmModule.get()?.version() || "unknown version"
-      }
-
-      if (!mazeData) {
+        console.error('Failed to generate maze data - WASM module issue')
 
         res.status(500).json({ error: 'Failed to generate maze data' })
 
