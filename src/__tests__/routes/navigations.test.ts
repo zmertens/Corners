@@ -70,7 +70,7 @@ describe('Navigation Routes', () => {
     const response = await request(app).get('/')
 
     expect(response.status).toBe(200)
-    expect(response.text).toBe('** Corners ** Login/Auth services!')
+    expect(response.text).toBe('** Corners ** Maze building services!')
   })
 
   it('should handle POST to /api/mazes/create', async () => {

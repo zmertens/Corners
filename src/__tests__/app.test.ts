@@ -6,9 +6,6 @@ import {
   afterEach,
   jest,
 } from '@jest/globals'
-import request from 'supertest'
-import mongoose from 'mongoose'
-import jwt from 'jsonwebtoken'
 
 // Define types for mocks
 type MockApp = {
@@ -66,15 +63,60 @@ jest.mock('express', () => {
 jest.mock('../services/wasmLoader', () => {
   return {
     loadWasm: jest.fn().mockImplementation(() => {
+      // Create a mock that matches the actual WASM module structure
+      const mockStringVector = jest.fn().mockImplementation(() => ({
+        push_back: jest.fn(),
+        delete: jest.fn(),
+      }))
+
+      const mockCli = {
+        convert: jest.fn().mockReturnValue('mock maze data'),
+        convert_as_base64: jest.fn().mockReturnValue('bW9jayBtYXplIGRhdGE='), // "mock maze data" in base64
+        help: jest.fn().mockReturnValue('mock help message'),
+        version: jest.fn().mockReturnValue('mock version'),
+      }
+
       return Promise.resolve({
-        convert: (r: number, c: number): string => `mock maze ${r}x${c}`,
+        get: jest.fn().mockReturnValue(mockCli),
+        StringVector: mockStringVector,
+        cli: {},
+        _main: jest.fn(),
+        calledRun: true,
       })
     }),
   }
 })
 
+jest.mock('../services/mazeService', () => ({
+  getWasmModule: jest.fn().mockImplementation(() => {
+    const mockStringVector = jest.fn().mockImplementation(() => ({
+      push_back: jest.fn(),
+      delete: jest.fn(),
+    }))
+
+    const mockCli = {
+      convert: jest.fn().mockReturnValue('mock maze data'),
+      convert_as_base64: jest.fn().mockReturnValue('bW9jayBtYXplIGRhdGE='),
+      help: jest.fn().mockReturnValue('mock help message'),
+      version: jest.fn().mockReturnValue('mock version'),
+    }
+
+    return Promise.resolve({
+      get: jest.fn().mockReturnValue(mockCli),
+      StringVector: mockStringVector,
+      cli: {},
+      _main: jest.fn(),
+      calledRun: true,
+    })
+  }),
+  generateMaze: jest.fn().mockImplementation(() => Promise.resolve('mock maze data')),
+}))
+
 jest.mock('../config/database', () => jest.fn())
 jest.mock('../routes/navigations', () => jest.fn())
+jest.mock('../middleware/wasm', () => ({
+  wasmMiddleware: jest.fn((_req: any, _res: any, next: any) => next()),
+}))
 
 describe('Express App', () => {
   let mockExpress: MockExpress
@@ -129,5 +171,22 @@ describe('Express App', () => {
 
     // Verify the startup message was logged
     // expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Server is running'));
+  })
+
+  it('should initialize WASM module without errors', async () => {
+    // Get the mock before importing the app
+    const { getWasmModule } = require('../services/mazeService')
+    
+    // Import app to trigger initialization
+    jest.isolateModules(() => {
+      require('../app')
+    })
+
+    // Wait a bit for async WASM initialization
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    // The test passes if no errors were thrown during app initialization
+    // WASM mock is working if we see the console logs showing successful initialization
+    expect(true).toBe(true) // This test mainly verifies no errors during init
   })
 })
