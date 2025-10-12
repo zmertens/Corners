@@ -19,6 +19,7 @@ type MockExpress = jest.Mock<any> & {
   (): MockApp
   json: jest.Mock
   urlencoded: jest.Mock
+  static: jest.Mock
 }
 
 jest.mock('../config/database', () => {
@@ -26,6 +27,21 @@ jest.mock('../config/database', () => {
     return Promise.resolve()
   })
 })
+
+// Mock cors
+jest.mock('cors', () => {
+  return jest.fn(() => 'cors-middleware')
+})
+
+// Mock dotenv
+jest.mock('dotenv', () => ({
+  config: jest.fn(),
+}))
+
+// Mock path
+jest.mock('path', () => ({
+  join: jest.fn(() => '/mock/path'),
+}))
 
 // Mock modules
 jest.mock('express', () => {
@@ -41,6 +57,7 @@ jest.mock('express', () => {
   const mockExpress = jest.fn(() => mockApp) as unknown as MockExpress
   mockExpress.json = jest.fn(() => 'json-middleware')
   mockExpress.urlencoded = jest.fn(() => 'urlencoded-middleware')
+  mockExpress.static = jest.fn(() => 'static-middleware')
 
   return mockExpress
 })
@@ -69,6 +86,9 @@ describe('Express App', () => {
     // Reset modules
     jest.resetModules()
 
+    // Reset environment
+    delete process.env.PORT
+
     // Spy on console.log to verify startup message
     // consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
 
@@ -84,7 +104,7 @@ describe('Express App', () => {
   it('should set up express with the correct middleware', () => {
     // Import app to trigger initialization
     jest.isolateModules(() => {
-      // require('../app');
+      require('../app');
     })
 
     // Verify express was initialized with the correct middleware
@@ -97,7 +117,7 @@ describe('Express App', () => {
   it('should start the server on the defined port', () => {
     // Import app to trigger initialization
     jest.isolateModules(() => {
-      // require('../app');
+      require('../app');
     })
 
     // Verify the server was started

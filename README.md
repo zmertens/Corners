@@ -1,22 +1,30 @@
 # Corners
 
-Corners is a Node.js and Express web application that allows users to manage users. high-scores, and provide utility functions for generating mazes for games and stuff.
+Corners is a Node.js and Express web application that provides endpoints for creating mazes.
+  - POST or PUT `/api/mazes/create`
 
-The user data consists of username and passwords, scores, and program arguments in JSON format. The user data can be taken to generate mazes in string formats.
-
-The program arguments are representations of mazes that contain relevant information such as the number of rows, columns, seed, and generating-algorithm.
+```json
+   {
+      "algo": "binary_tree",
+      "seed": 10,
+      "rows": 100,
+      "columns": 100,
+   }
+```
 
 ## Features
 
-- RESTful API for communication
-  - Provides action verbs for creating and retrieving users
+- RESTful API `/api/mazes/`
+
 - Integration with MongoDB for data storage
-  - Persistent storage for user data
-- Integration with a WebAssembly module for efficient and portable utilities
-  - Provides maze-generating library
-- JWT token-based authentication
-  - Provides secure way to transfer login requests with session info
-  - Password reset functionality via secure tokens
+  
+- Integration with the [Maze Builder](https://github.com/zmertens/MazeBuilder) WebAssembly module
+  - Efficient JavaScript layer around a C++ library
+  - Provides maze-generating functions
+
+- @TODO Socket based UDP connections for real-time data transfers
+
+- @TODO CRON job that works to provide maze data automatically
 
 ## Setup Instructions
 
@@ -34,7 +42,7 @@ The program arguments are representations of mazes that contain relevant informa
    ```
 
 3. **Configure the database:**
-   Update the `config/database.ts` file with your local MongoDB connection string.
+   Update the `config/database.ts` file with your local MongoDB connection string if needed.
 
 4. **Run the application:**
 

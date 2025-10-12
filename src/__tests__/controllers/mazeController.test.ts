@@ -11,9 +11,46 @@ import {
 } from '../../controllers/mazeController'
 import { AuthRequest } from '../../types/index'
 
+// Mock mongoose before importing modules that use it
+jest.mock('mongoose', () => {
+  function MockSchema(this: any, definition: any, options?: any) {
+    this.methods = {}
+    this.pre = jest.fn()
+    this.post = jest.fn()
+  }
+  
+  // Add Types as a static property
+  MockSchema.Types = {
+    ObjectId: jest.fn(),
+  }
+  
+  return {
+    Schema: MockSchema,
+    model: jest.fn(),
+    connect: jest.fn(),
+    connection: {
+      on: jest.fn(),
+      once: jest.fn(),
+    },
+    Types: {
+      ObjectId: jest.fn(),
+    },
+  }
+})
+
 // Mock dependencies
-jest.mock('../../models/maze')
+jest.mock('../../models/maze', () => ({
+  MazeModel: {
+    create: jest.fn(),
+    find: jest.fn(),
+    findById: jest.fn(),
+    findByIdAndUpdate: jest.fn(),
+    findByIdAndDelete: jest.fn(),
+  },
+}))
 jest.mock('../../services/mazeService')
+
+const mockedMazeModel = MazeModel as jest.Mocked<typeof MazeModel>
 
 describe('Maze Controller', () => {
   let mockRequest: Partial<AuthRequest>
@@ -74,16 +111,18 @@ describe('Maze Controller', () => {
         save: jest.fn().mockResolvedValue(true),
       }
 
-      ;(MazeModel.create as jest.Mock).mockResolvedValue(mockMaze)
+      mockedMazeModel.create.mockResolvedValue(mockMaze)
 
       // Call controller function
       await createMaze(mockRequest as AuthRequest, mockResponse as Response)
 
-      // Assertions
+      // Assertions - The convert function should be called with a StringVector, not raw numbers
       expect(
         mockRequest.wasmModule?.get()?.convert
-      ).toHaveBeenCalledWith(10, 10)
-      expect(MazeModel.create).toHaveBeenCalledWith({
+      ).toHaveBeenCalledWith(expect.objectContaining({
+        push_back: expect.any(Function)
+      }))
+      expect(mockedMazeModel.create).toHaveBeenCalledWith({
         id: expect.any(String),
         data: 'mock maze data',
         rows: 10,
@@ -130,7 +169,7 @@ describe('Maze Controller', () => {
         save: jest.fn().mockResolvedValue(true),
       }
 
-      ;(MazeModel.create as jest.Mock).mockResolvedValue(mockMaze)
+      mockedMazeModel.create.mockResolvedValue(mockMaze)
 
       // Call controller function
       await createMaze(mockRequest as AuthRequest, mockResponse as Response)

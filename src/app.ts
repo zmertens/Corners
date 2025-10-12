@@ -34,17 +34,18 @@ getWasmModule()
         console.log('WASM module initialized successfully and retrieved pointer')
 
         // Test maze generation
-        const r = "10"
-        const c = "10"
+        const r = 10
+        const c = 10
         try {
           const params = new module.StringVector()
           params.push_back("-r")
           params.push_back(`${r}`)
           params.push_back("-c")
           params.push_back(`${c}`)
-          const testMaze = cliPointer.convert(params)
+          const testMaze = cliPointer.convert_as_base64(params)
           console.log(`Test maze generation successful: ${r}x${c} maze created`)
-          console.log(testMaze)
+          const testMazeDecoded = Buffer.from(testMaze, 'base64').toString('utf8');
+          console.log(testMazeDecoded)
 
           params.delete();
           

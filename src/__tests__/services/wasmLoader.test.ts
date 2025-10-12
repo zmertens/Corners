@@ -2,7 +2,7 @@ import { loadWasm } from '../../services/wasmLoader'
 import Module from '../../../public/mazebuildercli'
 
 // Mock the mazebuilder module
-jest.mock('../../../public/mazebuildercli.js', () => {
+jest.mock('../../../public/mazebuildercli', () => {
   return jest.fn()
 })
 
@@ -35,6 +35,7 @@ describe('WASM Loader', () => {
     const mockModule = {
       get: mockGet,
       convert: mockStringifyFromDimens,
+      StringVector: jest.fn(), // Add StringVector to the mock
     }
 
     ;(Module as jest.Mock).mockResolvedValue(mockModule)
@@ -50,9 +51,9 @@ describe('WASM Loader', () => {
   })
 
   it('should handle failure to get pointer from WASM module', async () => {
-    // Mock WASM module with failing get() function
+    // Mock WASM module without StringVector
     ;(Module as jest.Mock).mockResolvedValue({
-      get: () => false,
+      // Missing StringVector property
     })
 
     // Call the loadWasm function
@@ -61,13 +62,13 @@ describe('WASM Loader', () => {
     // Verify error handling
     expect(result).toBeNull()
     expect(consoleErrorSpy).toHaveBeenCalledWith(
-      'Failed to get pointer from WASM module'
+      'StringVector not available in WASM module'
     )
   })
 
   it('should handle failure to initialize WASM module', async () => {
     // Mock failure to initialize WASM module
-    ;(Module as jest.Mock).mockResolvedValue(null)
+    (Module as jest.Mock).mockResolvedValue(null)
 
     // Call the loadWasm function
     const result = await loadWasm()

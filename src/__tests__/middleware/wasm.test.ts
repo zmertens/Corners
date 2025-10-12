@@ -4,7 +4,11 @@ import * as mazeService from '../../services/mazeService'
 import { AuthRequest } from '../../types'
 
 // Mock dependencies
-jest.mock('../../services/mazeService')
+jest.mock('../../services/mazeService', () => ({
+  getWasmModule: jest.fn(),
+}))
+
+const mockedMazeService = mazeService as jest.Mocked<typeof mazeService>
 
 describe('WASM Middleware', () => {
   let mockRequest: Partial<AuthRequest>
@@ -37,7 +41,7 @@ describe('WASM Middleware', () => {
     const mockWasmInstance = {
       convert: jest.fn().mockReturnValue('mock maze data'),
     }
-    ;(mazeService.getWasmModule as jest.Mock).mockResolvedValue(
+    ;(mockedMazeService.getWasmModule as jest.Mock).mockResolvedValue(
       mockWasmInstance
     )
 
@@ -49,7 +53,7 @@ describe('WASM Middleware', () => {
     )
 
     // Assertions
-    expect(mazeService.getWasmModule).toHaveBeenCalled()
+    expect(mockedMazeService.getWasmModule).toHaveBeenCalled()
     expect(mockRequest.wasmModule).toBe(mockWasmInstance)
     expect(mockNext).toHaveBeenCalled()
     expect(consoleWarnSpy).not.toHaveBeenCalled()
@@ -57,7 +61,7 @@ describe('WASM Middleware', () => {
 
   it('should proceed without WASM instance when loading fails', async () => {
     // Mock failed WASM instance loading
-    ;(mazeService.getWasmModule as jest.Mock).mockResolvedValue(null)
+    mockedMazeService.getWasmModule.mockResolvedValue(null)
 
     // Call middleware
     await wasmMiddleware(
@@ -67,7 +71,7 @@ describe('WASM Middleware', () => {
     )
 
     // Assertions
-    expect(mazeService.getWasmModule).toHaveBeenCalled()
+    expect(mockedMazeService.getWasmModule).toHaveBeenCalled()
     // expect(mockRequest.wasmInstance).toBeUndefined();
     expect(mockNext).toHaveBeenCalled()
     expect(consoleWarnSpy).toHaveBeenCalledWith(
@@ -78,7 +82,7 @@ describe('WASM Middleware', () => {
   it('should handle exceptions and proceed', async () => {
     // Mock exception when loading WASM
     const mockError = new Error('Test error')
-    ;(mazeService.getWasmModule as jest.Mock).mockRejectedValue(mockError)
+    mockedMazeService.getWasmModule.mockRejectedValue(mockError)
 
     // Call middleware
     await wasmMiddleware(
@@ -88,7 +92,7 @@ describe('WASM Middleware', () => {
     )
 
     // Assertions
-    expect(mazeService.getWasmModule).toHaveBeenCalled()
+    expect(mockedMazeService.getWasmModule).toHaveBeenCalled()
     expect(mockRequest.wasmModule).toBeUndefined()
     expect(mockNext).toHaveBeenCalled()
     expect(consoleErrorSpy).toHaveBeenCalledWith(
