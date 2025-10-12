@@ -3,11 +3,7 @@ import mongoose from 'mongoose'
 import { MazeModel } from '../../models/maze'
 import * as mazeService from '../../services/mazeService'
 import {
-  createMaze,
-  getUserMazes,
-  getMazeById,
-  updateMaze,
-  deleteMaze,
+  createMazeAPI,
 } from '../../controllers/mazeController'
 import { AuthRequest } from '../../types/index'
 
@@ -80,19 +76,26 @@ describe('Maze Controller', () => {
     jest.clearAllMocks()
   })
 
-  describe('createMaze', () => {
-    it('should create a new maze successfully', async () => {
+  describe('createMazeAPI', () => {
+    let mockApiRequest: Partial<Request>
+
+    beforeEach(() => {
+      mockApiRequest = {
+        body: {},
+      }
+    })
+
+    it('should create a maze with the new API format', async () => {
       // Setup request data
-      mockRequest.body = {
-        rows: 10,
-        columns: 10,
-        algorithm: 'recursive-backtracker',
+      mockApiRequest.body = {
+        algo: 'binary_tree',
+        seed: 10,
+        rows: 100,
+        columns: 100,
       }
 
       // Mock WASM instance
-      mockRequest.wasmModule = {
-        _main: jest.fn(),
-        cli: jest.fn(),
+      ;(mockApiRequest as any).wasmModule = {
         StringVector: jest.fn().mockReturnValue({
           push_back: jest.fn(),
         }),
@@ -101,119 +104,75 @@ describe('Maze Controller', () => {
         }),
       }
 
-      // Mock maze creation
-      const mockMaze = {
-        id: 'test_maze_id',
-        data: 'mock maze data',
-        rows: 10,
-        columns: 10,
-        algorithm: 'recursive-backtracker',
-        save: jest.fn().mockResolvedValue(true),
-      }
-
-      mockedMazeModel.create.mockResolvedValue(mockMaze)
-
       // Call controller function
-      await createMaze(mockRequest as AuthRequest, mockResponse as Response)
+      await createMazeAPI(mockApiRequest as Request, mockResponse as Response)
 
-      // Assertions - The convert function should be called with a StringVector, not raw numbers
-      expect(mockRequest.wasmModule?.get()?.convert).toHaveBeenCalledWith(
-        expect.objectContaining({
-          push_back: expect.any(Function),
-        })
-      )
-      expect(mockedMazeModel.create).toHaveBeenCalledWith({
-        id: expect.any(String),
-        data: 'mock maze data',
-        rows: 10,
-        columns: 10,
-        algorithm: 'recursive-backtracker',
-        user: mockUser._id,
-      })
+      // Assertions
       expect(mockResponse.status).toHaveBeenCalledWith(201)
       expect(mockResponse.json).toHaveBeenCalledWith({
-        message: 'Maze created successfully',
-        maze: expect.objectContaining({
-          id: mockMaze.id,
-          data: mockMaze.data,
-          rows: mockMaze.rows,
-          columns: mockMaze.columns,
-          algorithm: mockMaze.algorithm,
-        }),
+        data: expect.any(String), // base64 encoded data
+        createdAt: expect.any(String), // ISO timestamp
+        version_str: expect.any(String), // version from package.json
       })
     })
 
-    it('should fall back to mazeService when wasmInstance is not available', async () => {
+    it('should fall back to maze service when WASM is not available', async () => {
       // Setup request data
-      mockRequest.body = {
-        rows: 10,
-        columns: 10,
-        algorithm: 'recursive-backtracker',
+      mockApiRequest.body = {
+        algo: 'recursive_backtracker',
+        rows: 50,
+        columns: 50,
       }
 
-      // Remove WASM instance
-      mockRequest.wasmModule = undefined
-
-      // Mock generateMaze service
-      ;(mazeService.generateMaze as jest.Mock).mockResolvedValue(
-        'mock maze data from service'
-      )
-
-      // Mock maze creation
-      const mockMaze = {
-        id: 'test_maze_id',
-        data: 'mock maze data from service',
-        rows: 10,
-        columns: 10,
-        algorithm: 'recursive-backtracker',
-        save: jest.fn().mockResolvedValue(true),
-      }
-
-      mockedMazeModel.create.mockResolvedValue(mockMaze)
+      // Mock maze service
+      ;(mazeService.generateMaze as jest.Mock).mockResolvedValue('service maze data')
 
       // Call controller function
-      await createMaze(mockRequest as AuthRequest, mockResponse as Response)
+      await createMazeAPI(mockApiRequest as Request, mockResponse as Response)
 
       // Assertions
-      expect(mazeService.generateMaze).toHaveBeenCalledWith(
-        10,
-        10,
-        'recursive-backtracker'
-      )
-      expect(MazeModel.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: 'mock maze data from service',
-        })
-      )
+      expect(mazeService.generateMaze).toHaveBeenCalledWith(50, 50, 'recursive_backtracker')
       expect(mockResponse.status).toHaveBeenCalledWith(201)
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        data: expect.any(String), // base64 encoded data
+        createdAt: expect.any(String),
+        version_str: expect.any(String),
+      })
     })
 
     it('should return 400 if rows or columns are missing', async () => {
-      // Setup request with missing data
-      mockRequest.body = {}
+      // Setup request with missing parameters
+      mockApiRequest.body = {
+        algo: 'binary_tree',
+        seed: 10,
+        // Missing rows and columns
+      }
 
       // Call controller function
-      await createMaze(mockRequest as AuthRequest, mockResponse as Response)
+      await createMazeAPI(mockApiRequest as Request, mockResponse as Response)
 
       // Assertions
       expect(mockResponse.status).toHaveBeenCalledWith(400)
       expect(mockResponse.json).toHaveBeenCalledWith({
-        message: 'Missing required parameters: rows and columns',
+        error: 'Missing required parameters: rows and columns',
       })
     })
 
-    it('should return 401 if user is not authenticated', async () => {
-      // Setup request with missing user
-      mockRequest.user = undefined
-      mockRequest.body = { rows: 10, columns: 10 }
+    it('should return 400 if rows or columns are invalid', async () => {
+      // Setup request with invalid parameters
+      mockApiRequest.body = {
+        algo: 'binary_tree',
+        rows: 'invalid',
+        columns: -5,
+      }
 
       // Call controller function
-      await createMaze(mockRequest as AuthRequest, mockResponse as Response)
+      await createMazeAPI(mockApiRequest as Request, mockResponse as Response)
 
       // Assertions
-      expect(mockResponse.status).toHaveBeenCalledWith(401)
+      expect(mockResponse.status).toHaveBeenCalledWith(400)
       expect(mockResponse.json).toHaveBeenCalledWith({
-        message: 'User not authenticated',
+        error: 'rows and columns must be positive integers',
       })
     })
   })

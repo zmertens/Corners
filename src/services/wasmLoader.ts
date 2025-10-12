@@ -12,6 +12,7 @@ export async function loadWasm(): Promise<MainModule | null> {
 
     // Validate module initialization
     if (!activeModule) {
+      
       console.error('Failed to initialize WASM module')
 
       return null
@@ -19,7 +20,9 @@ export async function loadWasm(): Promise<MainModule | null> {
 
     // Validate that StringVector is available
     if (!activeModule.StringVector) {
+
       console.error('StringVector not available in WASM module')
+
       return null
     }
 
@@ -27,7 +30,9 @@ export async function loadWasm(): Promise<MainModule | null> {
     console.log('StringVector available:', typeof activeModule.StringVector)
 
     return activeModule
+
   } catch (error) {
+    
     console.error(
       'Error loading WASM module:',
       error instanceof Error ? error.message : String(error)

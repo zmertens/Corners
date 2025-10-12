@@ -24,58 +24,67 @@ app.use(express.static(path.join(__dirname, '..', 'public')))
 // Connect to database
 connectDatabase()
 
+// Set up routes first
+setNavigations(app)
+
+// Apply WASM middleware
+app.use(wasmMiddleware)
+
 // Pre-initialize WASM module
 getWasmModule()
   .then((module) => {
     if (module) {
-      const cliPointer = module.get()
-      if (cliPointer) {
-        console.log(
-          'WASM module initialized successfully and retrieved pointer'
-        )
+      console.log('WASM module loaded successfully')
+      console.log('Available methods:', Object.keys(module))
+      console.log('StringVector available:', typeof module.StringVector)
+      console.log('get method available:', typeof module.get)
 
-        // Test maze generation
-        const r = 10
-        const c = 10
-        try {
-          const params = new module.StringVector()
-          params.push_back('-r')
-          params.push_back(`${r}`)
-          params.push_back('-c')
-          params.push_back(`${c}`)
-          const testMaze = cliPointer.convert_as_base64(params)
-          console.log(`Test maze generation successful: ${r}x${c} maze created`)
-          const testMazeDecoded = Buffer.from(testMaze, 'base64').toString(
-            'utf8'
-          )
-          console.log(testMazeDecoded)
+      try {
+        const cliPointer = module.get()
+        
+        if (cliPointer) {
+          console.log('WASM CLI instance retrieved successfully')
+          console.log('CLI methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(cliPointer)))
 
-          params.delete()
+          // Test maze generation
+          const r = 10
+          const c = 10
+          try {
+            const params = new module.StringVector()
+            params.push_back('-r')
+            params.push_back(`${r}`)
+            params.push_back('-c')
+            params.push_back(`${c}`)
+            const testMaze = cliPointer.convert_as_base64(params)
+            console.log(`Test maze generation successful: ${r}x${c} maze created`)
+            const testMazeDecoded = Buffer.from(testMaze, 'base64').toString('utf8')
+            console.log('Test maze preview:', testMazeDecoded.substring(0, 100) + '...')
 
-          // Create a new StringVector for help command
-          const helpParams = new module.StringVector()
-          helpParams.push_back('-h')
-          const helpMessage = cliPointer.convert(helpParams)
-          console.log('Help message from WASM module:')
-          console.log(helpMessage)
-          helpParams.delete()
-        } catch (error) {
-          console.error('Test maze generation failed:', error)
+            params.delete()
+
+            // Create a new StringVector for help command
+            const helpParams = new module.StringVector()
+            helpParams.push_back('-h')
+            const helpMessage = cliPointer.convert(helpParams)
+            console.log('Help message from WASM module:')
+            console.log(helpMessage)
+            helpParams.delete()
+          } catch (error) {
+            console.error('Test maze generation failed:', error)
+          }
+        } else {
+          console.error('Failed to get CLI instance from WASM module')
         }
-      } else {
-        console.error('Failed to initialize WASM module')
+      } catch (error) {
+        console.error('Error getting CLI instance:', error)
       }
+    } else {
+      console.error('WASM module is null')
     }
   })
   .catch((error) => {
     console.error('Error initializing WASM module:', error)
   })
-
-// Apply WASM middleware
-app.use(wasmMiddleware)
-
-// Set up routes
-setNavigations(app)
 
 // Error handling middleware
 app.use(
@@ -101,19 +110,24 @@ app.use((_req: express.Request, res: express.Response) => {
 // Start server
 const server = app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`)
+  console.log('Available endpoints:')
+  console.log('  POST/PUT /api/mazes/create - Create new maze')
+  console.log('  POST /api/auth/login - User login') 
+  console.log('  POST /api/auth/register - User registration')
+  console.log('  GET / - Base route')
+  
+  // Log registered routes after server is fully started
+  console.log('\nRegistered routes:')
+  if (app._router && app._router.stack) {
+    app._router.stack.forEach((r: any) => {
+      if (r.route && r.route.path) {
+        console.log(`  ${Object.keys(r.route.methods).join(', ').toUpperCase()} ${r.route.path}`)
+      }
+    })
+  } else {
+    console.log('  No routes registered or router not initialized')
+  }
 })
-
-console.log('Registered routes:')
-// Log registered routes safely
-if (app._router && app._router.stack) {
-  app._router.stack.forEach((r: any) => {
-    if (r.route && r.route.path) {
-      console.log(`${Object.keys(r.route.methods).join(', ')} ${r.route.path}`)
-    }
-  })
-} else {
-  console.log('No routes registered or router not initialized')
-}
 
 // Handle graceful shutdown
 process.on('SIGTERM', () => {

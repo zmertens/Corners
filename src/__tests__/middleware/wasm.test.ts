@@ -5,12 +5,14 @@ import { AuthRequest } from '../../types'
 
 // Mock dependencies
 jest.mock('../../services/mazeService', () => ({
+
   getWasmModule: jest.fn(),
 }))
 
 const mockedMazeService = mazeService as jest.Mocked<typeof mazeService>
 
 describe('WASM Middleware', () => {
+
   let mockRequest: Partial<AuthRequest>
   let mockResponse: Partial<Response>
   let mockNext: jest.MockedFunction<NextFunction>
@@ -42,11 +44,13 @@ describe('WASM Middleware', () => {
       convert: jest.fn().mockReturnValue('mock maze data'),
     }
     ;(mockedMazeService.getWasmModule as jest.Mock).mockResolvedValue(
+
       mockWasmInstance
     )
 
     // Call middleware
     await wasmMiddleware(
+      
       mockRequest as AuthRequest,
       mockResponse as Response,
       mockNext

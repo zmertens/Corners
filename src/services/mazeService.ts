@@ -10,6 +10,7 @@ let wasmInstance: MainModule | null = null
  */
 export const getWasmModule = async (): Promise<MainModule | null> => {
   if (!wasmInstance) {
+    
     wasmInstance = await loadWasm()
   }
 
