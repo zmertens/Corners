@@ -68,7 +68,7 @@ describe('WASM Loader', () => {
 
   it('should handle failure to initialize WASM module', async () => {
     // Mock failure to initialize WASM module
-    (Module as jest.Mock).mockResolvedValue(null)
+    ;(Module as jest.Mock).mockResolvedValue(null)
 
     // Call the loadWasm function
     const result = await loadWasm()

@@ -67,8 +67,7 @@ jest.mock('../services/wasmLoader', () => {
   return {
     loadWasm: jest.fn().mockImplementation(() => {
       return Promise.resolve({
-        convert: (r: number, c: number): string =>
-          `mock maze ${r}x${c}`,
+        convert: (r: number, c: number): string => `mock maze ${r}x${c}`,
       })
     }),
   }
@@ -104,7 +103,7 @@ describe('Express App', () => {
   it('should set up express with the correct middleware', () => {
     // Import app to trigger initialization
     jest.isolateModules(() => {
-      require('../app');
+      require('../app')
     })
 
     // Verify express was initialized with the correct middleware
@@ -117,7 +116,7 @@ describe('Express App', () => {
   it('should start the server on the defined port', () => {
     // Import app to trigger initialization
     jest.isolateModules(() => {
-      require('../app');
+      require('../app')
     })
 
     // Verify the server was started

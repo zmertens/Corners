@@ -18,12 +18,12 @@ jest.mock('mongoose', () => {
     this.pre = jest.fn()
     this.post = jest.fn()
   }
-  
+
   // Add Types as a static property
   MockSchema.Types = {
     ObjectId: jest.fn(),
   }
-  
+
   return {
     Schema: MockSchema,
     model: jest.fn(),
@@ -98,7 +98,7 @@ describe('Maze Controller', () => {
         }),
         get: jest.fn().mockReturnValue({
           convert: jest.fn().mockReturnValue('mock maze data'),
-        })
+        }),
       }
 
       // Mock maze creation
@@ -117,11 +117,11 @@ describe('Maze Controller', () => {
       await createMaze(mockRequest as AuthRequest, mockResponse as Response)
 
       // Assertions - The convert function should be called with a StringVector, not raw numbers
-      expect(
-        mockRequest.wasmModule?.get()?.convert
-      ).toHaveBeenCalledWith(expect.objectContaining({
-        push_back: expect.any(Function)
-      }))
+      expect(mockRequest.wasmModule?.get()?.convert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          push_back: expect.any(Function),
+        })
+      )
       expect(mockedMazeModel.create).toHaveBeenCalledWith({
         id: expect.any(String),
         data: 'mock maze data',

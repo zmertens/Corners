@@ -34,9 +34,9 @@ export const createMaze = async (
       // Try using WASM instance from request if available (faster)
       if (req.wasmModule) {
         var sv = new req.wasmModule.StringVector()
-        sv.push_back("-r")
+        sv.push_back('-r')
         sv.push_back(parseInt(rows, 10).toString())
-        sv.push_back("-c")
+        sv.push_back('-c')
         sv.push_back(parseInt(columns, 10).toString())
         mazeData = req.wasmModule.get()?.convert(sv)
       } else {

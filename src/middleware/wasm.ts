@@ -16,7 +16,6 @@ export const wasmMiddleware = async (
     const mod = await getWasmModule()
 
     if (!mod) {
-      
       console.warn('WASM middleware: Failed to load WASM module')
     }
 

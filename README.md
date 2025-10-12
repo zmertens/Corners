@@ -1,15 +1,16 @@
 # Corners
 
 Corners is a Node.js and Express web application that provides endpoints for creating mazes.
-  - POST or PUT `/api/mazes/create`
+
+- POST or PUT `/api/mazes/create`
 
 ```json
-   {
-      "algo": "binary_tree",
-      "seed": 10,
-      "rows": 100,
-      "columns": 100,
-   }
+{
+  "algo": "binary_tree",
+  "seed": 10,
+  "rows": 100,
+  "columns": 100
+}
 ```
 
 ## Features
@@ -17,8 +18,8 @@ Corners is a Node.js and Express web application that provides endpoints for cre
 - RESTful API `/api/mazes/`
 
 - Integration with MongoDB for data storage
-  
 - Integration with the [Maze Builder](https://github.com/zmertens/MazeBuilder) WebAssembly module
+
   - Efficient JavaScript layer around a C++ library
   - Provides maze-generating functions
 

@@ -9,9 +9,7 @@ let wasmInstance: MainModule | null = null
  * @returns The initialized WebAssembly instance
  */
 export const getWasmModule = async (): Promise<MainModule | null> => {
-
   if (!wasmInstance) {
-
     wasmInstance = await loadWasm()
   }
 
@@ -31,11 +29,9 @@ export const generateMaze = async (
   columns: number,
   algorithm: string = 'dfs'
 ): Promise<string> => {
-
   const wasmModule: MainModule | null = await getWasmModule()
 
   if (!wasmModule) {
-
     throw new Error('Failed to get instance from WASM module')
   }
 
@@ -45,11 +41,11 @@ export const generateMaze = async (
     const validColumns = Math.max(1, Math.floor(columns))
 
     const sv = new wasmModule.StringVector()
-    sv.push_back("-r")
+    sv.push_back('-r')
     sv.push_back(validRows.toString())
-    sv.push_back("-c")
+    sv.push_back('-c')
     sv.push_back(validColumns.toString())
-    sv.push_back("-a")
+    sv.push_back('-a')
     sv.push_back(algorithm)
 
     const cliPointer = wasmModule.get()
@@ -64,7 +60,6 @@ export const generateMaze = async (
     sv.delete() // Clean up the StringVector
     return result
   } catch (error) {
-
     throw new Error(
       `Maze generation failed: ${error instanceof Error ? error.message : String(error)}`
     )

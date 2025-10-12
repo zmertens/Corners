@@ -9,12 +9,12 @@ jest.mock('mongoose', () => {
     this.pre = jest.fn()
     this.post = jest.fn()
   }
-  
+
   // Add Types as a static property
   MockSchema.Types = {
     ObjectId: jest.fn(),
   }
-  
+
   return {
     Schema: MockSchema,
     model: jest.fn(),
