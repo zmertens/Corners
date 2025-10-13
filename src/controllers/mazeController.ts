@@ -288,3 +288,43 @@ export const createMazeAPI = async (
     res.status(500).json({ error: 'Server error' })
   }
 }
+
+/**
+ * Returns help information for both WASM module and Corners app
+ */
+export const getHelp = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    let mazeBuilderHelp = 'WASM module help not available'
+    
+    // Get help string from WASM module
+    if (req.wasmModule) {
+      try {
+        const wasmModule = req.wasmModule
+        const cliInstance = wasmModule.get()
+        
+        if (cliInstance && cliInstance.help) {
+          mazeBuilderHelp = cliInstance.help()
+        }
+      } catch (wasmError) {
+        console.error('Error getting WASM help:', wasmError)
+      }
+    } else {
+      console.warn('WASM module not available on request object')
+    }
+    
+    // Get package info
+    const packageInfo = require('../../package.json')
+    const cornersInfo = `${packageInfo.name} v${packageInfo.version} - ${packageInfo.description}`
+    
+    res.json({
+      maze_builder_help: mazeBuilderHelp,
+      corners_info: cornersInfo
+    })
+  } catch (error) {
+    console.error('Get help error:', error)
+    res.status(500).json({ error: 'Server error' })
+  }
+}

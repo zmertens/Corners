@@ -19,6 +19,11 @@ const setNavigations = (app: Application) => {
     })
   })
 
+  // Help route
+  app.get('/api/help', (req, res, next) => {
+    Promise.resolve(mazeController.getHelp(req, res)).catch(next)
+  })
+
   // Auth routes
   app.post('/api/auth/login', (req, res, next) => {
     Promise.resolve(authController.login(req, res)).catch(next)

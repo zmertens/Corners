@@ -11,6 +11,12 @@ jest.mock('../../controllers/mazeController', () => ({
       version_str: '1.0.0',
     })
   }),
+  getHelp: jest.fn((req, res) => {
+    res.json({
+      maze_builder_help: 'Mock WASM CLI help text - usage instructions for maze generation',
+      corners_info: 'corners v1.0.0 - A helper app for maze building and parsing'
+    })
+  }),
 }))
 
 jest.mock('../../controllers/authController', () => ({
@@ -107,6 +113,19 @@ describe('Navigation Routes', () => {
     expect(response.body).toHaveProperty('data')
     expect(response.body).toHaveProperty('createdAt')
     expect(response.body).toHaveProperty('version_str')
+  })
+
+  it('should handle GET to /api/help', async () => {
+    const response = await request(app)
+      .get('/api/help')
+
+    expect(response.status).toBe(200)
+    expect(response.body).toHaveProperty('maze_builder_help')
+    expect(response.body).toHaveProperty('corners_info')
+    expect(typeof response.body.maze_builder_help).toBe('string')
+    expect(typeof response.body.corners_info).toBe('string')
+    expect(response.body.corners_info).toContain('corners')
+    expect(response.body.corners_info).toContain('v1.0.0')
   })
 
   // Additional tests can be added here as more routes are implemented
