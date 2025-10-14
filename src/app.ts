@@ -55,10 +55,8 @@ getWasmModule()
             params.push_back(`${r}`)
             params.push_back('-c')
             params.push_back(`${c}`)
-            const testMaze = cliPointer.convert_as_base64(params)
-            console.log(`Test maze generation successful: ${r}x${c} maze created`)
-            const testMazeDecoded = Buffer.from(testMaze, 'base64').toString('utf8')
-            console.log('Test maze preview:', testMazeDecoded.substring(0, 100) + '...')
+            const testMaze = cliPointer.convert(params)
+            console.log(`Test maze generation successful\n\n${testMaze}\n`)
 
             params.delete()
 
