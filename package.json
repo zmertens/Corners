@@ -1,7 +1,7 @@
 {
   "name": "corners",
   "version": "1.0.0",
-  "description": "A helper app for maze building and parsing",
+  "description": "A helper app for maze building",
   "main": "src/app.ts",
   "scripts": {
     "build": "tsc",

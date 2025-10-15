@@ -198,12 +198,19 @@ export const createMazeAPI = async (
 ): Promise<void> => {
   try {
     // Validate request body
-    const { algo = 'binary_tree', seed, rows, columns } = req.body
+    const {
+      algo = 'binary_tree',
+      seed,
+      rows,
+      columns,
+      distances = '',
+    } = req.body
 
     if (!rows || !columns) {
       res.status(400).json({
         error: 'Missing required parameters: rows and columns',
       })
+
       return
     }
 
@@ -212,7 +219,12 @@ export const createMazeAPI = async (
     const numColumns = parseInt(columns as string, 10)
     const numSeed = seed ? parseInt(seed as string, 10) : undefined
 
-    if (isNaN(numRows) || isNaN(numColumns) || numRows <= 0 || numColumns <= 0) {
+    if (
+      isNaN(numRows) ||
+      isNaN(numColumns) ||
+      numRows <= 0 ||
+      numColumns <= 0
+    ) {
       res.status(400).json({
         error: 'rows and columns must be positive integers',
       })
@@ -226,7 +238,7 @@ export const createMazeAPI = async (
       // Use WASM module if available on request object
       if (req.wasmModule) {
         const wasmModule = req.wasmModule
-        
+
         // Check if the module has the expected structure
         if (wasmModule.StringVector && wasmModule.get) {
           const sv = new wasmModule.StringVector()
@@ -234,34 +246,43 @@ export const createMazeAPI = async (
           sv.push_back(numRows.toString())
           sv.push_back('-c')
           sv.push_back(numColumns.toString())
-          
-          // Add algorithm parameter if supported by WASM
-          if (algo) {
-            sv.push_back('-a')
-            sv.push_back(algo)
-          }
-          
+
+          sv.push_back('-a')
+          sv.push_back(algo)
+
           // Add seed parameter if provided
           if (numSeed !== undefined) {
             sv.push_back('-s')
             sv.push_back(numSeed.toString())
           }
-          
+
+          // Add distances if provided
+          if (distances.length > 0) {
+            sv.push_back('-d')
+            sv.push_back(distances.toString())
+          }
+
           const cliInstance = wasmModule.get()
+
           if (cliInstance && cliInstance.convert_as_base64) {
             mazeData = cliInstance.convert_as_base64(sv)
-            mazeBuilderCliVersion = cliInstance.version ? cliInstance.version() : "unknown version"
+
+            mazeBuilderCliVersion = cliInstance.version
+              ? cliInstance.version()
+              : 'unknown version'
           }
-          
+
           // Clean up
           sv.delete()
         } else {
-          console.warn('WASM module missing expected methods (StringVector or get)')
+          console.warn(
+            'WASM module missing expected methods (StringVector or get)'
+          )
         }
       } else {
         console.warn('WASM module not available on request object')
-      }      if (!mazeData) {
-
+      }
+      if (!mazeData) {
         console.error('Failed to generate maze data - WASM module issue')
 
         res.status(500).json({ error: 'Failed to generate maze data' })
@@ -274,15 +295,12 @@ export const createMazeAPI = async (
         createdAt: new Date().toISOString(),
         version_str: mazeBuilderCliVersion,
       })
-
     } catch (wasmError) {
-
       console.error('WASM maze generation error:', wasmError)
 
       res.status(500).json({ error: 'Failed to generate maze' })
     }
   } catch (error) {
-
     console.error('Create maze API error:', error)
 
     res.status(500).json({ error: 'Server error' })
@@ -298,13 +316,13 @@ export const getHelp = async (
 ): Promise<void> => {
   try {
     let mazeBuilderHelp = 'WASM module help not available'
-    
+
     // Get help string from WASM module
     if (req.wasmModule) {
       try {
         const wasmModule = req.wasmModule
         const cliInstance = wasmModule.get()
-        
+
         if (cliInstance && cliInstance.help) {
           mazeBuilderHelp = cliInstance.help()
         }
@@ -314,14 +332,14 @@ export const getHelp = async (
     } else {
       console.warn('WASM module not available on request object')
     }
-    
+
     // Get package info
     const packageInfo = require('../../package.json')
     const cornersInfo = `${packageInfo.name} v${packageInfo.version} - ${packageInfo.description}`
-    
+
     res.json({
       maze_builder_help: mazeBuilderHelp,
-      corners_info: cornersInfo
+      corners_info: cornersInfo,
     })
   } catch (error) {
     console.error('Get help error:', error)

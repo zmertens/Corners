@@ -2,9 +2,7 @@ import { Request, Response } from 'express'
 import mongoose, { version } from 'mongoose'
 import { MazeModel } from '../../models/maze'
 
-import {
-  createMazeAPI,
-} from '../../controllers/mazeController'
+import { createMazeAPI } from '../../controllers/mazeController'
 import { AuthRequest } from '../../types/index'
 
 // Mock mongoose before importing modules that use it
@@ -93,6 +91,7 @@ describe('Maze Controller', () => {
         seed: 10,
         rows: 100,
         columns: 100,
+        distances: '[:]',
       }
 
       // Mock WASM instance

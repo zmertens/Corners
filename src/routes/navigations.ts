@@ -15,7 +15,7 @@ const setNavigations = (app: Application) => {
     res.json({
       hasWasmModule: hasWasm,
       wasmModuleKeys: req.wasmModule ? Object.keys(req.wasmModule) : [],
-      message: hasWasm ? 'WASM module available' : 'WASM module not available'
+      message: hasWasm ? 'WASM module available' : 'WASM module not available',
     })
   })
 

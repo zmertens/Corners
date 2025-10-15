@@ -18,7 +18,9 @@ export const wasmMiddleware = async (
     if (!mod) {
       console.warn('WASM middleware: Failed to load WASM module')
     } else {
-      console.log('WASM middleware: Module loaded successfully, attaching to request')
+      console.log(
+        'WASM middleware: Module loaded successfully, attaching to request'
+      )
       console.log('WASM middleware: Available methods:', Object.keys(mod))
     }
 

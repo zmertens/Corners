@@ -41,10 +41,13 @@ getWasmModule()
 
       try {
         const cliPointer = module.get()
-        
+
         if (cliPointer) {
           console.log('WASM CLI instance retrieved successfully')
-          console.log('CLI methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(cliPointer)))
+          console.log(
+            'CLI methods:',
+            Object.getOwnPropertyNames(Object.getPrototypeOf(cliPointer))
+          )
 
           // Test maze generation
           const r = 10
@@ -110,16 +113,18 @@ const server = app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`)
   console.log('Available endpoints:')
   console.log('  POST/PUT /api/mazes/create - Create new maze')
-  console.log('  POST /api/auth/login - User login') 
+  console.log('  POST /api/auth/login - User login')
   console.log('  POST /api/auth/register - User registration')
   console.log('  GET / - Base route')
-  
+
   // Log registered routes after server is fully started
   console.log('\nRegistered routes:')
   if (app._router && app._router.stack) {
     app._router.stack.forEach((r: any) => {
       if (r.route && r.route.path) {
-        console.log(`  ${Object.keys(r.route.methods).join(', ').toUpperCase()} ${r.route.path}`)
+        console.log(
+          `  ${Object.keys(r.route.methods).join(', ').toUpperCase()} ${r.route.path}`
+        )
       }
     })
   } else {

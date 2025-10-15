@@ -13,8 +13,9 @@ jest.mock('../../controllers/mazeController', () => ({
   }),
   getHelp: jest.fn((req, res) => {
     res.json({
-      maze_builder_help: 'Mock WASM CLI help text - usage instructions for maze generation',
-      corners_info: 'corners v1.0.0 - A helper app for maze building and parsing'
+      maze_builder_help:
+        'Mock WASM CLI help text - usage instructions for maze generation',
+      corners_info: 'corners v1.0.0 - A helper app for maze building',
     })
   }),
 }))
@@ -87,9 +88,7 @@ describe('Navigation Routes', () => {
       columns: 100,
     }
 
-    const response = await request(app)
-      .post('/api/mazes/create')
-      .send(payload)
+    const response = await request(app).post('/api/mazes/create').send(payload)
 
     expect(response.status).toBe(201)
     expect(response.body).toHaveProperty('data')
@@ -105,9 +104,7 @@ describe('Navigation Routes', () => {
       columns: 50,
     }
 
-    const response = await request(app)
-      .put('/api/mazes/create')
-      .send(payload)
+    const response = await request(app).put('/api/mazes/create').send(payload)
 
     expect(response.status).toBe(201)
     expect(response.body).toHaveProperty('data')
@@ -116,8 +113,7 @@ describe('Navigation Routes', () => {
   })
 
   it('should handle GET to /api/help', async () => {
-    const response = await request(app)
-      .get('/api/help')
+    const response = await request(app).get('/api/help')
 
     expect(response.status).toBe(200)
     expect(response.body).toHaveProperty('maze_builder_help')

@@ -170,14 +170,14 @@ describe('Express App', () => {
   it('should initialize WASM module without errors', async () => {
     // Get the mock before importing the app
     const { getWasmModule } = require('../services/wasmLoader')
-    
+
     // Import app to trigger initialization
     jest.isolateModules(() => {
       require('../app')
     })
 
     // Wait a bit for async WASM initialization
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise((resolve) => setTimeout(resolve, 100))
 
     // The test passes if no errors were thrown during app initialization
     // WASM mock is working if we see the console logs showing successful initialization
