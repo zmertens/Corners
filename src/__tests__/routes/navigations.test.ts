@@ -5,11 +5,27 @@ import setNavigations from '../../routes/navigations'
 // Mock the controllers
 jest.mock('../../controllers/mazeController', () => ({
   createMazeAPI: jest.fn((req, res) => {
-    res.status(201).json({
-      data: 'bW9jayBtYXplIGRhdGE=', // "mock maze data" in base64
-      createdAt: '2025-10-12T00:00:00.000Z',
-      version_str: '1.0.0',
-    })
+    const requestBody = req.body
+    const isArray = Array.isArray(requestBody)
+    
+    if (isArray) {
+      // Handle array of configurations
+      const results = requestBody.map((config, index) => ({
+        data: `bW9jayBtYXplIGRhdGE${index}=`, // "mock maze data{index}" in base64
+        createdAt: '2025-10-12T00:00:00.000Z',
+        version_str: '1.0.0',
+        config: config,
+      }))
+      res.status(201).json(results)
+    } else {
+      // Handle single configuration
+      res.status(201).json({
+        data: 'bW9jayBtYXplIGRhdGE=', // "mock maze data" in base64
+        createdAt: '2025-10-12T00:00:00.000Z',
+        version_str: '1.0.0',
+        config: requestBody,
+      })
+    }
   }),
   getHelp: jest.fn((req, res) => {
     res.json({
@@ -80,7 +96,7 @@ describe('Navigation Routes', () => {
     expect(response.text).toBe('** Corners ** Maze building services!')
   })
 
-  it('should handle POST to /api/mazes/create', async () => {
+  it('should handle POST to /api/mazes/create with single object', async () => {
     const payload = {
       algo: 'binary_tree',
       seed: 10,
@@ -94,9 +110,44 @@ describe('Navigation Routes', () => {
     expect(response.body).toHaveProperty('data')
     expect(response.body).toHaveProperty('createdAt')
     expect(response.body).toHaveProperty('version_str')
+    expect(response.body).toHaveProperty('config')
+    expect(response.body.config).toEqual(payload)
   })
 
-  it('should handle PUT to /api/mazes/create', async () => {
+  it('should handle POST to /api/mazes/create with array of objects', async () => {
+    const payload = [
+      {
+        algo: 'dfs',
+        seed: 42,
+        rows: 10,
+        columns: 10,
+        distances: '[0:-1]',
+      },
+      {
+        algo: 'binary_tree',
+        seed: 123,
+        rows: 20,
+        columns: 15,
+      },
+    ]
+
+    const response = await request(app).post('/api/mazes/create').send(payload)
+
+    expect(response.status).toBe(201)
+    expect(Array.isArray(response.body)).toBe(true)
+    expect(response.body).toHaveLength(2)
+    
+    // Check each result in the array
+    response.body.forEach((result: any, index: number) => {
+      expect(result).toHaveProperty('data')
+      expect(result).toHaveProperty('createdAt')
+      expect(result).toHaveProperty('version_str')
+      expect(result).toHaveProperty('config')
+      expect(result.config).toEqual(payload[index])
+    })
+  })
+
+  it('should handle PUT to /api/mazes/create with single object', async () => {
     const payload = {
       algo: 'recursive_backtracker',
       seed: 42,
@@ -110,6 +161,7 @@ describe('Navigation Routes', () => {
     expect(response.body).toHaveProperty('data')
     expect(response.body).toHaveProperty('createdAt')
     expect(response.body).toHaveProperty('version_str')
+    expect(response.body).toHaveProperty('config')
   })
 
   it('should handle GET to /api/help', async () => {

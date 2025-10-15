@@ -84,7 +84,7 @@ describe('Maze Controller', () => {
       }
     })
 
-    it('should create a maze with the new API format', async () => {
+    it('should create a maze with the new API format (single object)', async () => {
       // Setup request data
       mockApiRequest.body = {
         algo: 'binary_tree',
@@ -114,11 +114,100 @@ describe('Maze Controller', () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         data: expect.any(String), // base64 encoded data
         createdAt: expect.any(String), // ISO timestamp
-        version_str: expect.any(String), // version from package.json
+        version_str: expect.any(String), // version from WASM module
+        config: mockApiRequest.body, // original configuration
       })
     })
 
-    it('should return 400 if rows or columns are missing', async () => {
+    it('should create multiple mazes with array input', async () => {
+      // Setup request data with array
+      mockApiRequest.body = [
+        {
+          algo: 'dfs',
+          seed: 42,
+          rows: 10,
+          columns: 10,
+          distances: '[0:-1]',
+        },
+        {
+          algo: 'binary_tree',
+          rows: 20,
+          columns: 15,
+        },
+      ]
+
+      // Mock WASM instance
+      ;(mockApiRequest as any).wasmModule = {
+        StringVector: jest.fn().mockReturnValue({
+          push_back: jest.fn(),
+          delete: jest.fn(),
+        }),
+        get: jest.fn().mockReturnValue({
+          convert_as_base64: jest.fn().mockReturnValue('mock maze data'),
+          version: jest.fn().mockReturnValue('mock version'),
+        }),
+      }
+
+      // Call controller function
+      await createMazeAPI(mockApiRequest as Request, mockResponse as Response)
+
+      // Assertions
+      expect(mockResponse.status).toHaveBeenCalledWith(201)
+      expect(mockResponse.json).toHaveBeenCalledWith([
+        {
+          data: expect.any(String),
+          createdAt: expect.any(String),
+          version_str: expect.any(String),
+          config: mockApiRequest.body[0],
+        },
+        {
+          data: expect.any(String),
+          createdAt: expect.any(String),
+          version_str: expect.any(String),
+          config: mockApiRequest.body[1],
+        },
+      ])
+    })
+
+    it('should return 400 if array is empty', async () => {
+      // Setup request with empty array
+      mockApiRequest.body = []
+
+      // Call controller function
+      await createMazeAPI(mockApiRequest as Request, mockResponse as Response)
+
+      // Assertions
+      expect(mockResponse.status).toHaveBeenCalledWith(400)
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        error: 'Request body cannot be empty',
+      })
+    })
+
+    it('should return 400 if any configuration in array is missing required parameters', async () => {
+      // Setup request with missing parameters in one configuration
+      mockApiRequest.body = [
+        {
+          algo: 'dfs',
+          rows: 10,
+          columns: 10,
+        },
+        {
+          algo: 'binary_tree',
+          // Missing rows and columns
+        },
+      ]
+
+      // Call controller function
+      await createMazeAPI(mockApiRequest as Request, mockResponse as Response)
+
+      // Assertions
+      expect(mockResponse.status).toHaveBeenCalledWith(400)
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        error: 'Missing required parameters (rows and columns) in configuration 2',
+      })
+    })
+
+    it('should return 400 if rows or columns are missing (single object)', async () => {
       // Setup request with missing parameters
       mockApiRequest.body = {
         algo: 'binary_tree',
@@ -132,11 +221,11 @@ describe('Maze Controller', () => {
       // Assertions
       expect(mockResponse.status).toHaveBeenCalledWith(400)
       expect(mockResponse.json).toHaveBeenCalledWith({
-        error: 'Missing required parameters: rows and columns',
+        error: 'Missing required parameters (rows and columns) in configuration 1',
       })
     })
 
-    it('should return 400 if rows or columns are invalid', async () => {
+    it('should return error for invalid rows or columns', async () => {
       // Setup request with invalid parameters
       mockApiRequest.body = {
         algo: 'binary_tree',
@@ -144,13 +233,53 @@ describe('Maze Controller', () => {
         columns: -5,
       }
 
+      // Mock WASM instance to simulate the path where validation occurs
+      ;(mockApiRequest as any).wasmModule = {
+        StringVector: jest.fn().mockReturnValue({
+          push_back: jest.fn(),
+          delete: jest.fn(),
+        }),
+        get: jest.fn().mockReturnValue({
+          convert_as_base64: jest.fn().mockReturnValue('mock maze data'),
+          version: jest.fn().mockReturnValue('mock version'),
+        }),
+      }
+
+      // Call controller function
+      await createMazeAPI(mockApiRequest as Request, mockResponse as Response)
+
+      // Should return status 207 (multi-status) with error in the response
+      expect(mockResponse.status).toHaveBeenCalledWith(207)
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        data: '',
+        createdAt: expect.any(String),
+        version_str: '',
+        config: mockApiRequest.body,
+        error: 'rows and columns must be positive integers',
+      })
+    })
+
+    it('should handle WASM module unavailable', async () => {
+      // Setup request data
+      mockApiRequest.body = {
+        algo: 'binary_tree',
+        rows: 10,
+        columns: 10,
+      }
+
+      // No WASM module attached to request
+      ;(mockApiRequest as any).wasmModule = undefined
+
       // Call controller function
       await createMazeAPI(mockApiRequest as Request, mockResponse as Response)
 
       // Assertions
-      expect(mockResponse.status).toHaveBeenCalledWith(400)
+      expect(mockResponse.status).toHaveBeenCalledWith(500)
       expect(mockResponse.json).toHaveBeenCalledWith({
-        error: 'rows and columns must be positive integers',
+        data: '',
+        createdAt: expect.any(String),
+        version_str: '',
+        error: 'WASM module not available',
       })
     })
   })
