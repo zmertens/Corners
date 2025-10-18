@@ -3,7 +3,11 @@ import dotenv from 'dotenv'
 import cors from 'cors'
 import connectDatabase from './config/database'
 import setNavigations from './routes/navigations'
-import { initializeWasm, getWasmModule, isWasmReady } from './services/wasmLoader'
+import {
+  initializeWasm,
+  getWasmModule,
+  isWasmReady,
+} from './services/wasmLoader'
 import { wasmMiddleware } from './middleware/wasm'
 import path from 'path'
 
@@ -34,13 +38,13 @@ setNavigations(app)
 const initializeApp = async () => {
   try {
     console.log('🚀 Initializing application components...')
-    
+
     // Initialize WASM module
     await initializeWasm()
-    
+
     if (isWasmReady()) {
       console.log('✅ WASM module initialization complete')
-      
+
       // Optional: Test the WASM functionality
       const module = getWasmModule()
       if (module) {
@@ -62,9 +66,10 @@ const initializeApp = async () => {
         }
       }
     } else {
-      console.warn('⚠️ WASM module failed to initialize - maze generation will not be available')
+      console.warn(
+        '⚠️ WASM module failed to initialize - maze generation will not be available'
+      )
     }
-    
   } catch (error) {
     console.error('❌ Error during app initialization:', error)
     throw error
@@ -89,7 +94,6 @@ app.use(
 
 // 404 handler
 app.use((_req: express.Request, res: express.Response) => {
-  
   res.status(404).json({ message: 'Route not found' })
 })
 
@@ -98,33 +102,32 @@ const startServer = async () => {
   try {
     // Initialize app components first
     await initializeApp()
-    
+
     // Start the server
     const server = app.listen(PORT, () => {
-
       console.log(`🚀 Server is running on http://localhost:${PORT}`)
     })
-    
+
     // Handle graceful shutdown
     process.on('SIGTERM', () => {
-
       console.log('SIGTERM received. Shutting down gracefully')
 
       server.close(() => {
-
         console.log('Process terminated')
       })
     })
-    
+
     return server
-    
   } catch (error) {
     console.error('❌ Failed to start server:', error)
     process.exit(1)
   }
 }
 
-// Start the application
-startServer()
+// Start the application only if not in test mode
+if (process.env.NODE_ENV !== 'test') {
+  startServer()
+}
 
+export { startServer }
 export default app

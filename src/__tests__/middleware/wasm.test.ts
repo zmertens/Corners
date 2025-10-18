@@ -49,7 +49,7 @@ describe('WASM Middleware', () => {
       _main: jest.fn(),
       calledRun: true,
     } as any
-    
+
     mockedWasmLoader.getWasmModule.mockReturnValue(mockWasmInstance)
     mockedWasmLoader.isWasmReady.mockReturnValue(true)
 
@@ -98,7 +98,10 @@ describe('WASM Middleware', () => {
 
     // Verify error is handled and middleware continues
     expect(mockRequest.wasmModule).toBeUndefined()
-    expect(consoleErrorSpy).toHaveBeenCalledWith('WASM middleware error:', expect.any(Error))
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'WASM middleware error:',
+      expect.any(Error)
+    )
     expect(mockNext).toHaveBeenCalled()
   })
 
@@ -121,7 +124,7 @@ describe('WASM Middleware', () => {
   it('should log warnings in non-test environment', () => {
     // Change environment
     process.env.NODE_ENV = 'development'
-    
+
     mockedWasmLoader.getWasmModule.mockReturnValue(null)
     mockedWasmLoader.isWasmReady.mockReturnValue(false)
 
@@ -133,7 +136,9 @@ describe('WASM Middleware', () => {
     )
 
     // Verify warning is logged in non-test environment
-    expect(consoleWarnSpy).toHaveBeenCalledWith('⚠️ WASM module not available for request')
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      '⚠️ WASM module not available for request'
+    )
     expect(mockNext).toHaveBeenCalled()
   })
 })

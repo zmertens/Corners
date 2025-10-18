@@ -383,8 +383,8 @@ export const createMazeAPI = async (
 
     // Check WASM module availability - use global module or fallback to request module
     const wasmModule = getWasmModule() || req.wasmModule
-    
-    if (!wasmModule || !isWasmReady()) {
+
+    if (!wasmModule || (!isWasmReady() && !req.wasmModule)) {
       console.warn('WASM module not available')
       const errorResponse = isArray
         ? mazeConfigs.map((config) => ({
@@ -398,6 +398,7 @@ export const createMazeAPI = async (
             data: '',
             createdAt: new Date().toISOString(),
             version_str: '',
+            config: mazeConfigs[0],
             error: 'WASM module not available',
           }
 
@@ -417,7 +418,7 @@ export const createMazeAPI = async (
     if (hasErrors) {
       // Return results with errors marked
       const response = isArray ? results : results[0]
-      res.status(207).json(response) // 207 Multi-Status for partial success
+      res.status(207).json(response)
       return
     }
 
@@ -478,7 +479,7 @@ export const getHelp = async (
 
     // Get help string from the global WASM module first, then fallback to request module
     const wasmModule = getWasmModule() || req.wasmModule
-    
+
     if (wasmModule && isWasmReady()) {
       try {
         const cliInstance = wasmModule.get()

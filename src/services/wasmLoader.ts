@@ -14,7 +14,7 @@ let isWasmLoaded = false
 export async function loadWasm(): Promise<MainModule | null> {
   try {
     console.log('Loading WASM module...')
-    
+
     // Initialize the module
     const activeModule: MainModule = await Module()
 
@@ -96,4 +96,14 @@ export const getWasmModule = (): MainModule | null => {
  */
 export const isWasmReady = (): boolean => {
   return isWasmLoaded && wasmInstance !== null
+}
+
+/**
+ * Reset WASM loader state - for testing purposes only
+ * @internal
+ */
+export const resetWasmState = (): void => {
+  wasmInstance = null
+  wasmLoadingPromise = null
+  isWasmLoaded = false
 }

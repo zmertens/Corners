@@ -1,5 +1,9 @@
 // Test script to verify WASM module optimization
-import { initializeWasm, getWasmModule, isWasmReady } from '../src/services/wasmLoader'
+import {
+  initializeWasm,
+  getWasmModule,
+  isWasmReady,
+} from '../src/services/wasmLoader'
 
 const testWasmOptimization = async () => {
   console.log('🧪 Testing WASM Module Optimization')
@@ -18,7 +22,7 @@ const testWasmOptimization = async () => {
 
   // Test 2: Multiple calls to getWasmModule should be fast
   console.log('\n2. Testing multiple getWasmModule calls...')
-  
+
   const start1 = Date.now()
   const module1 = getWasmModule()
   const end1 = Date.now()
@@ -42,7 +46,7 @@ const testWasmOptimization = async () => {
   // Test 4: Test maze generation performance
   if (module1) {
     console.log('\n4. Testing maze generation performance...')
-    
+
     const generateMaze = (rows: number, cols: number) => {
       const startTime = Date.now()
       try {

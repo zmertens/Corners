@@ -4,6 +4,7 @@ import { MazeModel } from '../../models/maze'
 
 import { createMazeAPI } from '../../controllers/mazeController'
 import { AuthRequest } from '../../types/index'
+import { getWasmModule, isWasmReady } from '../../services/wasmLoader'
 
 // Mock mongoose before importing modules that use it
 jest.mock('mongoose', () => {
@@ -43,7 +44,15 @@ jest.mock('../../models/maze', () => ({
   },
 }))
 
-jest.mock('../../services/wasmLoader')
+jest.mock('../../services/wasmLoader', () => ({
+  getWasmModule: jest.fn(),
+  isWasmReady: jest.fn(),
+}))
+
+const mockedGetWasmModule = getWasmModule as jest.MockedFunction<
+  typeof getWasmModule
+>
+const mockedIsWasmReady = isWasmReady as jest.MockedFunction<typeof isWasmReady>
 
 const mockedMazeModel = MazeModel as jest.Mocked<typeof MazeModel>
 
@@ -82,6 +91,10 @@ describe('Maze Controller', () => {
       mockApiRequest = {
         body: {},
       }
+
+      // Default WASM mock setup - return null to use request module
+      mockedGetWasmModule.mockReturnValue(null)
+      mockedIsWasmReady.mockReturnValue(true)
     })
 
     it('should create a maze with the new API format (single object)', async () => {
@@ -272,6 +285,10 @@ describe('Maze Controller', () => {
       // No WASM module attached to request
       ;(mockApiRequest as any).wasmModule = undefined
 
+      // Mock WASM as unavailable
+      mockedGetWasmModule.mockReturnValue(null)
+      mockedIsWasmReady.mockReturnValue(false)
+
       // Call controller function
       await createMazeAPI(mockApiRequest as Request, mockResponse as Response)
 
@@ -281,6 +298,7 @@ describe('Maze Controller', () => {
         data: '',
         createdAt: expect.any(String),
         version_str: '',
+        config: mockApiRequest.body,
         error: 'WASM module not available',
       })
     })
