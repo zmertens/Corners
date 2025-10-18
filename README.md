@@ -2,111 +2,7 @@
 
 Corners is a Node.js and Express web application that provides authentication services and endpoints for creating mazes and managing user scores.
 
-## API Endpoints
-
-### Authentication Endpoints
-
-#### POST `/api/auth/login`
-
-Login a user with username and base64 encoded password.
-
-**Request Body:**
-
-```json
-{
-  "username": "string",
-  "password": "base64_encoded_password"
-}
-```
-
-**Response:**
-
-```json
-{
-  "message": "Login successful",
-  "token": "jwt_token",
-  "user": {
-    "id": "user_id",
-    "username": "string",
-    "email": "string"
-  }
-}
-```
-
-#### POST `/api/auth/logout`
-
-Logout a user (client-side token removal).
-
-**Response:**
-
-```json
-{
-  "message": "Logged out successfully"
-}
-```
-
-#### POST `/api/auth/register`
-
-Register a new user.
-
-**Request Body:**
-
-```json
-{
-  "username": "string",
-  "email": "string",
-  "password": "base64_encoded_password"
-}
-```
-
-#### GET `/api/auth/aliases`
-
-Get aliases for authenticated user (requires authentication).
-
-**Query Parameters:**
-
-- `limit` (optional): Number of results (default: 20, max: 100)
-- `active` (optional): Filter by active status (true/false)
-
-**Response:**
-
-```json
-{
-  "count": 2,
-  "aliases": [
-    {
-      "id": "alias_id",
-      "name": "alias_name",
-      "active": true,
-      "createdAt": "2024-01-01T00:00:00.000Z",
-      "updatedAt": "2024-01-01T00:00:00.000Z"
-    }
-  ]
-}
-```
-
-#### POST `/api/auth/aliases`
-
-Create a new alias (requires authentication).
-
-**Request Body:**
-
-```json
-{
-  "name": "string",
-  "active": true
-}
-```
-
-#### PUT `/api/auth/aliases/:id`
-
-Update an existing alias (requires authentication).
-
-#### DELETE `/api/auth/aliases/:id`
-
-Delete an alias (requires authentication).
-
-### Maze Endpoints
+### API Endpoints
 
 #### POST/PUT `/api/mazes/create`
 
@@ -199,10 +95,6 @@ Get scores for authenticated user (requires authentication).
 #### GET `/api/help`
 
 Get help information for the API and WASM module.
-
-#### GET `/api/test-wasm`
-
-Test endpoint to check WASM module availability.
 
 ## Features
 

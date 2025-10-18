@@ -11,16 +11,6 @@ const setNavigations = (app: Application) => {
     res.send('** Corners ** Maze building services!')
   })
 
-  // Test route to check WASM middleware
-  app.get('/api/test-wasm', (req: any, res) => {
-    const hasWasm = !!req.wasmModule
-    res.json({
-      hasWasmModule: hasWasm,
-      wasmModuleKeys: req.wasmModule ? Object.keys(req.wasmModule) : [],
-      message: hasWasm ? 'WASM module available' : 'WASM module not available',
-    })
-  })
-
   // Help route
   app.get('/api/help', (req, res, next) => {
     Promise.resolve(mazeController.getHelp(req, res)).catch(next)
