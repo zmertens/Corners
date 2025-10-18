@@ -50,13 +50,13 @@ const testHelpEndpoint = () => {
 
 const testSingleMazeCreation = () => {
   console.log('\n\n=== Testing Single Maze Creation ===')
-  
+
   const payload = JSON.stringify({
     algo: 'dfs',
     rows: 10,
     columns: 10,
     seed: 42,
-    distances: '[0:-1]'
+    distances: '[0:-1]',
   })
 
   const options = {
@@ -85,10 +85,19 @@ const testSingleMazeCreation = () => {
         console.log(JSON.stringify(response, null, 2))
 
         // Verify the expected structure for single maze
-        if (response.data && response.createdAt && response.version_str && response.config) {
-          console.log('\n✅ Success! Single maze endpoint returned expected structure')
+        if (
+          response.data &&
+          response.createdAt &&
+          response.version_str &&
+          response.config
+        ) {
+          console.log(
+            '\n✅ Success! Single maze endpoint returned expected structure'
+          )
         } else {
-          console.log('\n❌ Error: Unexpected response structure for single maze')
+          console.log(
+            '\n❌ Error: Unexpected response structure for single maze'
+          )
         }
       } catch (error) {
         console.log('\n❌ Error parsing JSON:', error.message)
@@ -107,33 +116,33 @@ const testSingleMazeCreation = () => {
 
 const testBatchMazeCreation = () => {
   console.log('\n\n=== Testing Batch Maze Creation ===')
-  
+
   const payload = JSON.stringify([
     {
       algo: 'binary_tree',
       rows: 5,
       columns: 5,
-      seed: 1
+      seed: 1,
     },
     {
       algo: 'dfs',
       rows: 10,
       columns: 10,
       seed: 42,
-      distances: '[0:-1]'
+      distances: '[0:-1]',
     },
     {
       algo: 'binary_tree',
       rows: 15,
       columns: 20,
-      seed: 123
+      seed: 123,
     },
     {
       algo: 'sidewinder',
       rows: 5,
       columns: 5,
-      seed: 42
-    }
+      seed: 42,
+    },
   ])
 
   const options = {
@@ -163,11 +172,15 @@ const testBatchMazeCreation = () => {
 
         // Verify the expected structure for array of mazes
         if (Array.isArray(response) && response.length === 4) {
-          const successfulMazes = response.filter(maze => maze.data && !maze.error)
-          const failedMazes = response.filter(maze => maze.error)
-          
-          console.log(`\n📊 Batch Results: ${successfulMazes.length} successful, ${failedMazes.length} failed`)
-          
+          const successfulMazes = response.filter(
+            (maze) => maze.data && !maze.error
+          )
+          const failedMazes = response.filter((maze) => maze.error)
+
+          console.log(
+            `\n📊 Batch Results: ${successfulMazes.length} successful, ${failedMazes.length} failed`
+          )
+
           if (failedMazes.length > 0) {
             console.log('\n⚠️  Failed mazes:')
             failedMazes.forEach((maze, index) => {
@@ -175,25 +188,31 @@ const testBatchMazeCreation = () => {
               console.log(`     Config: ${JSON.stringify(maze.config)}`)
             })
           }
-          
+
           // Check if all responses have required structure (including error cases)
-          const allValidStructure = response.every(maze => 
-            maze.createdAt && maze.config && (maze.data || maze.error)
+          const allValidStructure = response.every(
+            (maze) => maze.createdAt && maze.config && (maze.data || maze.error)
           )
-          
+
           if (allValidStructure) {
             if (successfulMazes.length === 4) {
               console.log('\n✅ Success! All mazes generated successfully')
             } else if (successfulMazes.length > 0) {
-              console.log('\n⚠️  Partial Success! Some mazes failed but API handled errors correctly')
+              console.log(
+                '\n⚠️  Partial Success! Some mazes failed but API handled errors correctly'
+              )
             } else {
               console.log('\n❌ All mazes failed to generate')
             }
           } else {
-            console.log('\n❌ Error: Some responses missing required structure fields')
+            console.log(
+              '\n❌ Error: Some responses missing required structure fields'
+            )
           }
         } else {
-          console.log('\n❌ Error: Unexpected response structure for batch mazes')
+          console.log(
+            '\n❌ Error: Unexpected response structure for batch mazes'
+          )
         }
       } catch (error) {
         console.log('\n❌ Error parsing JSON:', error.message)

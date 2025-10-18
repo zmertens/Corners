@@ -2,6 +2,8 @@ import { Application } from 'express'
 import { authenticate } from '../middleware/auth'
 import * as authController from '../controllers/authController'
 import * as mazeController from '../controllers/mazeController'
+import * as aliasController from '../controllers/aliasController'
+import * as scoreController from '../controllers/scoreController'
 
 const setNavigations = (app: Application) => {
   // Base route
@@ -35,6 +37,23 @@ const setNavigations = (app: Application) => {
     Promise.resolve(authController.register(req, res)).catch(next)
   })
 
+  // Alias routes (require authentication)
+  app.get('/api/auth/aliases', authenticate as any, (req, res, next) => {
+    Promise.resolve(aliasController.getAliases(req, res)).catch(next)
+  })
+
+  app.post('/api/auth/aliases', authenticate as any, (req, res, next) => {
+    Promise.resolve(aliasController.createAlias(req, res)).catch(next)
+  })
+
+  app.put('/api/auth/aliases/:id', authenticate as any, (req, res, next) => {
+    Promise.resolve(aliasController.updateAlias(req, res)).catch(next)
+  })
+
+  app.delete('/api/auth/aliases/:id', authenticate as any, (req, res, next) => {
+    Promise.resolve(aliasController.deleteAlias(req, res)).catch(next)
+  })
+
   app.post('/api/auth/forgot-password', (req, res, next) => {
     Promise.resolve(authController.forgotPassword(req, res)).catch(next)
   })
@@ -50,6 +69,24 @@ const setNavigations = (app: Application) => {
 
   app.put('/api/mazes/create', (req, res, next) => {
     Promise.resolve(mazeController.createMazeAPI(req, res)).catch(next)
+  })
+
+  // Maze scores routes (public endpoint)
+  app.get('/api/mazes/scores', (req, res, next) => {
+    Promise.resolve(mazeController.getMazeScores(req, res)).catch(next)
+  })
+
+  // Score management routes
+  app.post('/api/mazes/scores', (req, res, next) => {
+    Promise.resolve(scoreController.createScore(req, res)).catch(next)
+  })
+
+  app.put('/api/mazes/scores/:id', authenticate as any, (req, res, next) => {
+    Promise.resolve(scoreController.updateScore(req, res)).catch(next)
+  })
+
+  app.get('/api/user/scores', authenticate as any, (req, res, next) => {
+    Promise.resolve(scoreController.getUserScores(req, res)).catch(next)
   })
 
   // User routes

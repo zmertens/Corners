@@ -8,6 +8,13 @@ export const register = async (req: Request, res: Response) => {
   try {
     const { username, email, password } = req.body
 
+    // Validate input
+    if (!username || !email || !password) {
+      return res
+        .status(400)
+        .json({ message: 'Username, email, and password are required' })
+    }
+
     // Check if user already exists
     const existingUser = await UserModel.findOne({
       $or: [{ email }, { username }],
@@ -17,12 +24,13 @@ export const register = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'User already exists' })
     }
 
-    // Create new user
+    // Create new user (password expected to be base64 encoded)
     const user = await UserModel.create({
       username,
       email,
-      password,
+      password, // Will be processed by the pre-save hook
     })
+
     // Generate token
     const token = generateToken(user)
 
@@ -45,6 +53,13 @@ export const login = async (req: Request, res: Response) => {
   try {
     const { username, password } = req.body
 
+    // Validate input
+    if (!username || !password) {
+      return res
+        .status(400)
+        .json({ message: 'Username and password are required' })
+    }
+
     // Find user
     const user = await UserModel.findOne({ username })
 
@@ -52,12 +67,13 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Invalid credentials' })
     }
 
-    // Check password
+    // Check password (password should be base64 encoded)
     const isMatch = await user.comparePassword(password)
 
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid credentials' })
     }
+
     // Generate token
     const token = generateToken(user)
 

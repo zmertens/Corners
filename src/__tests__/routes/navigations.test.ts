@@ -7,7 +7,7 @@ jest.mock('../../controllers/mazeController', () => ({
   createMazeAPI: jest.fn((req, res) => {
     const requestBody = req.body
     const isArray = Array.isArray(requestBody)
-    
+
     if (isArray) {
       // Handle array of configurations
       const results = requestBody.map((config, index) => ({
@@ -136,7 +136,7 @@ describe('Navigation Routes', () => {
     expect(response.status).toBe(201)
     expect(Array.isArray(response.body)).toBe(true)
     expect(response.body).toHaveLength(2)
-    
+
     // Check each result in the array
     response.body.forEach((result: any, index: number) => {
       expect(result).toHaveProperty('data')

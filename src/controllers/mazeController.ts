@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import { MazeModel, Maze } from '../models/maze'
 import { AuthRequest } from '../types/index'
 import { UserDocument } from '../models/user'
+import { ScoreModel } from '../models/score'
 
 /**
  * Retrieves all mazes belonging to the authenticated user
@@ -213,25 +214,14 @@ const generateSingleMaze = async (
   config: MazeConfig,
   wasmModule: any
 ): Promise<MazeResult> => {
-  const {
-    algo = 'binary_tree',
-    seed,
-    rows,
-    columns,
-    distances = '',
-  } = config
+  const { algo = 'binary_tree', seed, rows, columns, distances = '' } = config
 
   // Validate numeric inputs
   const numRows = parseInt(rows as any, 10)
   const numColumns = parseInt(columns as any, 10)
   const numSeed = seed ? parseInt(seed as any, 10) : undefined
 
-  if (
-    isNaN(numRows) ||
-    isNaN(numColumns) ||
-    numRows <= 0 ||
-    numColumns <= 0
-  ) {
+  if (isNaN(numRows) || isNaN(numColumns) || numRows <= 0 || numColumns <= 0) {
     return {
       data: '',
       createdAt: new Date().toISOString(),
@@ -289,12 +279,12 @@ const generateSingleMaze = async (
             svRetry.push_back(numColumns.toString())
             svRetry.push_back('-a')
             svRetry.push_back(algo)
-            
+
             if (numSeed !== undefined) {
               svRetry.push_back('-s')
               svRetry.push_back(numSeed.toString())
             }
-            
+
             try {
               mazeData = cliInstance.convert_as_base64(svRetry)
               mazeBuilderCliVersion = cliInstance.version
@@ -304,7 +294,7 @@ const generateSingleMaze = async (
             } catch (retryError) {
               console.error('Retry also failed:', retryError)
             }
-            
+
             svRetry.delete()
           }
         }
@@ -420,6 +410,42 @@ export const createMazeAPI = async (
   } catch (error) {
     console.error('Create maze API error:', error)
     res.status(500).json({ error: 'Server error' })
+  }
+}
+
+/**
+ * Get maze scores with optional query parameters
+ * Query parameters:
+ * - limit: number (optional, default: 20, max: 100)
+ * Public endpoint - does not require authentication
+ */
+export const getMazeScores = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 100)
+
+    const scores = await ScoreModel.find({})
+      .limit(limit)
+      .sort({ score: -1, createdAt: -1 }) // Order by highest score first, then most recent
+      .select('score maze goal aliases createdAt')
+
+    const responseData = scores.map((score) => ({
+      score: score.score,
+      maze: score.maze, // base64 string
+      goal: score.goal, // { start: string, steps: number }
+      aliases: score.aliases, // list of strings
+      createdAt: score.createdAt,
+    }))
+
+    res.json({
+      count: responseData.length,
+      scores: responseData,
+    })
+  } catch (error) {
+    console.error('Get maze scores error:', error)
+    res.status(500).json({ message: 'Server error' })
   }
 }
 

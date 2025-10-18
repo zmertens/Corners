@@ -203,7 +203,8 @@ describe('Maze Controller', () => {
       // Assertions
       expect(mockResponse.status).toHaveBeenCalledWith(400)
       expect(mockResponse.json).toHaveBeenCalledWith({
-        error: 'Missing required parameters (rows and columns) in configuration 2',
+        error:
+          'Missing required parameters (rows and columns) in configuration 2',
       })
     })
 
@@ -221,7 +222,8 @@ describe('Maze Controller', () => {
       // Assertions
       expect(mockResponse.status).toHaveBeenCalledWith(400)
       expect(mockResponse.json).toHaveBeenCalledWith({
-        error: 'Missing required parameters (rows and columns) in configuration 1',
+        error:
+          'Missing required parameters (rows and columns) in configuration 1',
       })
     })
 
