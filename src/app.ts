@@ -27,7 +27,7 @@ connectDatabase()
 // Apply WASM middleware BEFORE routes (lightweight now)
 app.use(wasmMiddleware)
 
-// Set up routes after middleware
+// Set up routes after middleware but before server start
 setNavigations(app)
 
 // Initialize WASM module once during startup
@@ -64,13 +64,12 @@ const initializeApp = async () => {
     } else {
       console.warn('⚠️ WASM module failed to initialize - maze generation will not be available')
     }
+    
   } catch (error) {
     console.error('❌ Error during app initialization:', error)
+    throw error
   }
 }
-
-// Initialize app components
-initializeApp()
 
 // Error handling middleware
 app.use(
@@ -90,34 +89,42 @@ app.use(
 
 // 404 handler
 app.use((_req: express.Request, res: express.Response) => {
+  
   res.status(404).json({ message: 'Route not found' })
 })
 
-// Start server
-const server = app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`)
+// Start server function
+const startServer = async () => {
+  try {
+    // Initialize app components first
+    await initializeApp()
+    
+    // Start the server
+    const server = app.listen(PORT, () => {
 
-  // Log registered routes after server is fully started
-  console.log('\nRegistered routes:')
-  if (app._router && app._router.stack) {
-    app._router.stack.forEach((r: any) => {
-      if (r.route && r.route.path) {
-        console.log(
-          `  ${Object.keys(r.route.methods).join(', ').toUpperCase()} ${r.route.path}`
-        )
-      }
+      console.log(`🚀 Server is running on http://localhost:${PORT}`)
     })
-  } else {
-    console.log('  No routes registered or router not initialized')
-  }
-})
+    
+    // Handle graceful shutdown
+    process.on('SIGTERM', () => {
 
-// Handle graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received. Shutting down gracefully')
-  server.close(() => {
-    console.log('Process terminated')
-  })
-})
+      console.log('SIGTERM received. Shutting down gracefully')
+
+      server.close(() => {
+
+        console.log('Process terminated')
+      })
+    })
+    
+    return server
+    
+  } catch (error) {
+    console.error('❌ Failed to start server:', error)
+    process.exit(1)
+  }
+}
+
+// Start the application
+startServer()
 
 export default app

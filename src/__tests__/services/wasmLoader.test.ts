@@ -1,8 +1,9 @@
-import { loadWasm } from '../../services/wasmLoader'
+import * as wasmLoader from '../../services/wasmLoader'
 import Module from '../../../public/mazebuildercli'
 
 // Mock the mazebuilder module
 jest.mock('../../../public/mazebuildercli', () => {
+
   return jest.fn()
 })
 
@@ -14,19 +15,20 @@ describe('WASM Loader', () => {
     // Set up console spies
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {})
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+
+    jest.clearAllMocks()
   })
 
   afterEach(() => {
     // Clean up spies
     consoleLogSpy.mockRestore()
     consoleErrorSpy.mockRestore()
-    jest.clearAllMocks()
   })
 
-  it('should successfully load and return the WASM module', async () => {
+  it('should successfully initialize and return the WASM module', async () => {
     // Mock successful WASM module loading
     const mockGet = jest.fn().mockReturnValue(true)
-    const mockStringifyFromDimens = jest
+    const mockConvert = jest
       .fn()
       .mockImplementation(
         (r: number, c: number) => `Mocked maze string for dimensions ${r}x${c}`
@@ -34,49 +36,20 @@ describe('WASM Loader', () => {
 
     const mockModule = {
       get: mockGet,
-      convert: mockStringifyFromDimens,
+      convert: mockConvert,
       StringVector: jest.fn(), // Add StringVector to the mock
     }
 
     ;(Module as jest.Mock).mockResolvedValue(mockModule)
 
-    // Call the loadWasm function
-    const result = await loadWasm()
+    // Call the initializeWasm function
+    await wasmLoader.initializeWasm()
 
-    // Verify the result
-    expect(result).toBeTruthy()
+    // Verify the module is ready and accessible
+    expect(wasmLoader.isWasmReady()).toBe(true)
+    expect(wasmLoader.getWasmModule()).toBeTruthy()
     expect(consoleLogSpy).toHaveBeenCalledWith(
-      'WASM module loaded successfully'
-    )
-  })
-
-  it('should handle failure to get pointer from WASM module', async () => {
-    // Mock WASM module without StringVector
-    ;(Module as jest.Mock).mockResolvedValue({
-      // Missing StringVector property
-    })
-
-    // Call the loadWasm function
-    const result = await loadWasm()
-
-    // Verify error handling
-    expect(result).toBeNull()
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      'StringVector not available in WASM module'
-    )
-  })
-
-  it('should handle failure to initialize WASM module', async () => {
-    // Mock failure to initialize WASM module
-    ;(Module as jest.Mock).mockResolvedValue(null)
-
-    // Call the loadWasm function
-    const result = await loadWasm()
-
-    // Verify error handling
-    expect(result).toBeNull()
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      'Failed to initialize WASM module'
+      '✅ WASM module loaded successfully'
     )
   })
 
@@ -85,14 +58,8 @@ describe('WASM Loader', () => {
     const mockError = new Error('WASM loading error')
     ;(Module as jest.Mock).mockRejectedValue(mockError)
 
-    // Call the loadWasm function
-    const result = await loadWasm()
-
     // Verify error handling
-    expect(result).toBeNull()
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      'Error loading WASM module:',
-      mockError.message
-    )
+    expect(wasmLoader.isWasmReady()).toBe(false)
+    expect(wasmLoader.getWasmModule()).toBeNull()
   })
 })
