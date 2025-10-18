@@ -3,6 +3,7 @@ import { MazeModel, Maze } from '../models/maze'
 import { AuthRequest } from '../types/index'
 import { UserDocument } from '../models/user'
 import { ScoreModel } from '../models/score'
+import { getWasmModule, isWasmReady } from '../services/wasmLoader'
 
 /**
  * Retrieves all mazes belonging to the authenticated user
@@ -209,10 +210,11 @@ interface MazeResult {
 
 /**
  * Helper function to generate a single maze from configuration
+ * Uses the pre-loaded WASM module for efficiency
  */
 const generateSingleMaze = async (
   config: MazeConfig,
-  wasmModule: any
+  wasmModule?: any
 ): Promise<MazeResult> => {
   const { algo = 'binary_tree', seed, rows, columns, distances = '' } = config
 
@@ -235,9 +237,22 @@ const generateSingleMaze = async (
     let mazeData: string | undefined
     let mazeBuilderCliVersion: string | undefined
 
-    // Use WASM module if available
-    if (wasmModule && wasmModule.StringVector && wasmModule.get) {
-      const sv = new wasmModule.StringVector()
+    // Use the provided WASM module or get the global one
+    const moduleToUse = wasmModule || getWasmModule()
+
+    if (!moduleToUse || !isWasmReady()) {
+      return {
+        data: '',
+        createdAt: new Date().toISOString(),
+        version_str: '',
+        config,
+        error: 'WASM module not available',
+      }
+    }
+
+    // Use WASM module for maze generation
+    if (moduleToUse.StringVector && moduleToUse.get) {
+      const sv = new moduleToUse.StringVector()
       sv.push_back('-r')
       sv.push_back(numRows.toString())
       sv.push_back('-c')
@@ -259,7 +274,7 @@ const generateSingleMaze = async (
         sv.push_back(distances.toString())
       }
 
-      const cliInstance = wasmModule.get()
+      const cliInstance = moduleToUse.get()
 
       if (cliInstance && cliInstance.convert_as_base64) {
         try {
@@ -272,7 +287,7 @@ const generateSingleMaze = async (
           // Try without distances parameter if it's causing issues
           if (distances && distances.length > 0) {
             console.log('Retrying without distances parameter...')
-            const svRetry = new wasmModule.StringVector()
+            const svRetry = new moduleToUse.StringVector()
             svRetry.push_back('-r')
             svRetry.push_back(numRows.toString())
             svRetry.push_back('-c')
@@ -366,9 +381,11 @@ export const createMazeAPI = async (
       }
     }
 
-    // Check WASM module availability
-    if (!req.wasmModule) {
-      console.warn('WASM module not available on request object')
+    // Check WASM module availability - use global module or fallback to request module
+    const wasmModule = getWasmModule() || req.wasmModule
+    
+    if (!wasmModule || !isWasmReady()) {
+      console.warn('WASM module not available')
       const errorResponse = isArray
         ? mazeConfigs.map((config) => ({
             data: '',
@@ -391,7 +408,7 @@ export const createMazeAPI = async (
     // Generate mazes for all configurations
     const results: MazeResult[] = []
     for (const config of mazeConfigs) {
-      const result = await generateSingleMaze(config, req.wasmModule)
+      const result = await generateSingleMaze(config, wasmModule)
       results.push(result)
     }
 
@@ -459,10 +476,11 @@ export const getHelp = async (
   try {
     let mazeBuilderHelp = 'WASM module help not available'
 
-    // Get help string from WASM module
-    if (req.wasmModule) {
+    // Get help string from the global WASM module first, then fallback to request module
+    const wasmModule = getWasmModule() || req.wasmModule
+    
+    if (wasmModule && isWasmReady()) {
       try {
-        const wasmModule = req.wasmModule
         const cliInstance = wasmModule.get()
 
         if (cliInstance && cliInstance.help) {
@@ -472,7 +490,7 @@ export const getHelp = async (
         console.error('Error getting WASM help:', wasmError)
       }
     } else {
-      console.warn('WASM module not available on request object')
+      console.warn('WASM module not available for help')
     }
 
     // Get package info

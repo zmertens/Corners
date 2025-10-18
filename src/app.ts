@@ -3,7 +3,7 @@ import dotenv from 'dotenv'
 import cors from 'cors'
 import connectDatabase from './config/database'
 import setNavigations from './routes/navigations'
-import { getWasmModule } from './services/wasmLoader'
+import { initializeWasm, getWasmModule, isWasmReady } from './services/wasmLoader'
 import { wasmMiddleware } from './middleware/wasm'
 import path from 'path'
 
@@ -24,68 +24,53 @@ app.use(express.static(path.join(__dirname, '..', 'public')))
 // Connect to database
 connectDatabase()
 
-// Apply WASM middleware BEFORE routes
+// Apply WASM middleware BEFORE routes (lightweight now)
 app.use(wasmMiddleware)
 
 // Set up routes after middleware
 setNavigations(app)
 
-// Pre-initialize WASM module
-getWasmModule()
-  .then((module) => {
-    if (module) {
-      console.log('WASM module loaded successfully')
-      console.log('Available methods:', Object.keys(module))
-      console.log('StringVector available:', typeof module.StringVector)
-      console.log('get method available:', typeof module.get)
-
-      try {
-        const cliPointer = module.get()
-
-        if (cliPointer) {
-          console.log('WASM CLI instance retrieved successfully')
-          console.log(
-            'CLI methods:',
-            Object.getOwnPropertyNames(Object.getPrototypeOf(cliPointer))
-          )
-
-          // Test maze generation
-          const r = 10
-          const c = 10
-          try {
+// Initialize WASM module once during startup
+const initializeApp = async () => {
+  try {
+    console.log('🚀 Initializing application components...')
+    
+    // Initialize WASM module
+    await initializeWasm()
+    
+    if (isWasmReady()) {
+      console.log('✅ WASM module initialization complete')
+      
+      // Optional: Test the WASM functionality
+      const module = getWasmModule()
+      if (module) {
+        try {
+          const cliInstance = module.get()
+          if (cliInstance) {
+            // Quick test
             const params = new module.StringVector()
             params.push_back('-r')
-            params.push_back(`${r}`)
+            params.push_back('5')
             params.push_back('-c')
-            params.push_back(`${c}`)
-            const testMaze = cliPointer.convert(params)
-            console.log(`Test maze generation successful\n\n${testMaze}\n`)
-
+            params.push_back('5')
+            const testMaze = cliInstance.convert(params)
+            console.log(testMaze)
             params.delete()
-
-            // Create a new StringVector for help command
-            const helpParams = new module.StringVector()
-            helpParams.push_back('-h')
-            const helpMessage = cliPointer.convert(helpParams)
-            console.log('Help message from WASM module:')
-            console.log(helpMessage)
-            helpParams.delete()
-          } catch (error) {
-            console.error('Test maze generation failed:', error)
           }
-        } else {
-          console.error('Failed to get CLI instance from WASM module')
+        } catch (testError) {
+          console.warn('⚠️ WASM functionality test failed:', testError)
         }
-      } catch (error) {
-        console.error('Error getting CLI instance:', error)
       }
     } else {
-      console.error('WASM module is null')
+      console.warn('⚠️ WASM module failed to initialize - maze generation will not be available')
     }
-  })
-  .catch((error) => {
-    console.error('Error initializing WASM module:', error)
-  })
+  } catch (error) {
+    console.error('❌ Error during app initialization:', error)
+  }
+}
+
+// Initialize app components
+initializeApp()
 
 // Error handling middleware
 app.use(
@@ -111,11 +96,6 @@ app.use((_req: express.Request, res: express.Response) => {
 // Start server
 const server = app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`)
-  console.log('Available endpoints:')
-  console.log('  POST/PUT /api/mazes/create - Create new maze')
-  console.log('  POST /api/auth/login - User login')
-  console.log('  POST /api/auth/register - User registration')
-  console.log('  GET / - Base route')
 
   // Log registered routes after server is fully started
   console.log('\nRegistered routes:')

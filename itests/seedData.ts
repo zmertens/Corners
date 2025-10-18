@@ -1,7 +1,7 @@
 import mongoose from 'mongoose'
-import { UserModel } from '../models/user'
-import { AliasModel } from '../models/alias'
-import { ScoreModel } from '../models/score'
+import { UserModel } from '../src/models/user'
+import { AliasModel } from '../src/models/alias'
+import { ScoreModel } from '../src/models/score'
 
 const MONGODB_URI =
   process.env.MONGODB_URI || 'mongodb://localhost:27017/corners_dev'

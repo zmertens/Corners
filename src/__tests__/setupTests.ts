@@ -28,6 +28,14 @@ jest.mock('dotenv', () => ({
   config: jest.fn(),
 }))
 
+// Mock the service files to prevent dependency issues
+jest.mock('../services/wasmLoader', () => ({
+  getWasmModule: jest.fn().mockReturnValue(null),
+  isWasmReady: jest.fn().mockReturnValue(false),
+  initializeWasm: jest.fn(),
+  loadWasm: jest.fn(),
+}))
+
 // Mock the model files to prevent schema creation issues
 jest.mock('../models/alias', () => ({
   AliasModel: {
