@@ -50,7 +50,7 @@ describe('Auth Controller', () => {
       }
 
       ;(UserModel.findOne as jest.Mock).mockResolvedValue(mockUser)
-      ;(generateToken as jest.Mock).mockReturnValue('mock-jwt-token')
+      ;(generateToken as jest.Mock).mockReturnValue('mock-csv-token')
 
       await authController.login(mockReq as Request, mockRes as Response)
 
@@ -61,7 +61,7 @@ describe('Auth Controller', () => {
 
       expect(mockRes.json).toHaveBeenCalledWith({
         message: 'Login successful',
-        token: 'mock-jwt-token',
+        token: 'mock-csv-token',
         user: {
           id: 'user-id',
           username: 'testuser',
@@ -152,14 +152,14 @@ describe('Auth Controller', () => {
         username: 'newuser',
         email: 'new@example.com',
         save: jest.fn().mockResolvedValue(true),
-        token: 'new-jwt-token',
+        token: 'new-csv-token',
         ipAddress: '127.0.0.1',
         avatar: undefined,
       }
 
       ;(UserModel.findOne as jest.Mock).mockResolvedValue(null) // No existing user
       ;(UserModel.create as jest.Mock).mockResolvedValue(mockUser)
-      ;(generateToken as jest.Mock).mockReturnValue('new-jwt-token')
+      ;(generateToken as jest.Mock).mockReturnValue('new-csv-token')
 
       await authController.register(mockReq as Request, mockRes as Response)
 
@@ -179,7 +179,7 @@ describe('Auth Controller', () => {
       expect(mockRes.status).toHaveBeenCalledWith(201)
       expect(mockRes.json).toHaveBeenCalledWith({
         message: 'User created successfully',
-        token: 'new-jwt-token',
+        token: 'new-csv-token',
         user: {
           id: 'new-user-id',
           username: 'newuser',
