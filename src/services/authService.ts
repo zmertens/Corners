@@ -1,10 +1,10 @@
-import jwt from 'jsonwebtoken'
+import jwt, { SignOptions } from 'jsonwebtoken'
 import { UserDocument } from '../models/user'
 import mongoose from 'mongoose'
 
 // Get values from environment variables
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
-const JWT_EXPIRE = process.env.JWT_EXPIRE || '1d'
+const JWT_EXPIRE: string | number = process.env.JWT_EXPIRE || '1d'
 
 /**
  * Interface for decoded JWT token
@@ -13,8 +13,8 @@ export interface DecodedToken {
   id: string
   username: string
   email: string
-  iat?: number
-  exp?: number
+  iat: number
+  exp: number
 }
 
 /**
@@ -30,7 +30,11 @@ export const generateToken = (user: UserDocument): string => {
     email: user.email,
   }
 
-  return jwt.sign(payload, JWT_SECRET)
+  const options: SignOptions = {
+    expiresIn: JWT_EXPIRE as any
+  }
+
+  return jwt.sign(payload, JWT_SECRET, options)
 }
 
 /**

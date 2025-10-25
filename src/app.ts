@@ -47,7 +47,7 @@ const initializeApp = async () => {
 
       // Optional: Test the WASM functionality
       const module = getWasmModule()
-      if (module) {
+      if (module && module.get) {
         try {
           const cliInstance = module.get()
           if (cliInstance) {

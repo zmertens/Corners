@@ -4,9 +4,12 @@ import crypto from 'crypto'
 export interface User {
   username: string
   email: string
-  password: string // This will store base64 encoded password blob
+  password: string
   resetPasswordToken?: string
   resetPasswordExpires?: Date
+  ipAddress?: string
+  token?: string
+  avatar?: string
   createdAt?: Date
   updatedAt?: Date
 }
@@ -32,6 +35,9 @@ const userSchema = new Schema<UserDocument>(
     password: { type: String, required: true },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
+    ipAddress: { type: String },
+    token: { type: String },
+    avatar: { type: String }, // base64-encoded image
   },
   { timestamps: true }
 )

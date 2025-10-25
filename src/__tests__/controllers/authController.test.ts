@@ -30,9 +30,12 @@ describe('Auth Controller', () => {
     it('should login successfully with base64 password', async () => {
       const base64Password = Buffer.from('testpassword').toString('base64')
 
-      mockReq.body = {
-        username: 'testuser',
-        password: base64Password,
+      mockReq = {
+        body: {
+          username: 'testuser',
+          password: base64Password,
+        },
+        ip: '127.0.0.1',
       }
 
       const mockUser = {
@@ -40,6 +43,10 @@ describe('Auth Controller', () => {
         username: 'testuser',
         email: 'test@example.com',
         comparePassword: jest.fn().mockResolvedValue(true),
+        save: jest.fn().mockResolvedValue(true),
+        token: undefined,
+        ipAddress: undefined,
+        avatar: undefined,
       }
 
       ;(UserModel.findOne as jest.Mock).mockResolvedValue(mockUser)
@@ -50,6 +57,7 @@ describe('Auth Controller', () => {
       expect(UserModel.findOne).toHaveBeenCalledWith({ username: 'testuser' })
       expect(mockUser.comparePassword).toHaveBeenCalledWith(base64Password)
       expect(generateToken).toHaveBeenCalledWith(mockUser)
+      expect(mockUser.save).toHaveBeenCalled()
 
       expect(mockRes.json).toHaveBeenCalledWith({
         message: 'Login successful',
@@ -58,6 +66,8 @@ describe('Auth Controller', () => {
           id: 'user-id',
           username: 'testuser',
           email: 'test@example.com',
+          ipAddress: '127.0.0.1',
+          avatar: undefined,
         },
       })
     })
@@ -128,16 +138,23 @@ describe('Auth Controller', () => {
     it('should register user successfully with base64 password', async () => {
       const base64Password = Buffer.from('newpassword').toString('base64')
 
-      mockReq.body = {
-        username: 'newuser',
-        email: 'new@example.com',
-        password: base64Password,
+      mockReq = {
+        body: {
+          username: 'newuser',
+          email: 'new@example.com',
+          password: base64Password,
+        },
+        ip: '127.0.0.1',
       }
 
       const mockUser = {
         _id: 'new-user-id',
         username: 'newuser',
         email: 'new@example.com',
+        save: jest.fn().mockResolvedValue(true),
+        token: 'new-jwt-token',
+        ipAddress: '127.0.0.1',
+        avatar: undefined,
       }
 
       ;(UserModel.findOne as jest.Mock).mockResolvedValue(null) // No existing user
@@ -154,8 +171,11 @@ describe('Auth Controller', () => {
         username: 'newuser',
         email: 'new@example.com',
         password: base64Password,
+        avatar: undefined,
+        ipAddress: '127.0.0.1',
       })
 
+      expect(mockUser.save).toHaveBeenCalled()
       expect(mockRes.status).toHaveBeenCalledWith(201)
       expect(mockRes.json).toHaveBeenCalledWith({
         message: 'User created successfully',
@@ -164,6 +184,8 @@ describe('Auth Controller', () => {
           id: 'new-user-id',
           username: 'newuser',
           email: 'new@example.com',
+          ipAddress: '127.0.0.1',
+          avatar: undefined,
         },
       })
     })
