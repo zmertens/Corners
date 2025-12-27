@@ -6,7 +6,14 @@ import { generateToken } from '../services/authService'
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { username, email, password } = req.body
+    const { username, email, password, avatar } = req.body
+
+    // Validate input
+    if (!username || !email || !password) {
+      return res
+        .status(400)
+        .json({ message: 'Username, email, and password are required' })
+    }
 
     // Check if user already exists
     const existingUser = await UserModel.findOne({
@@ -17,14 +24,28 @@ export const register = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'User already exists' })
     }
 
-    // Create new user
+    // Capture IP address
+    const ipAddress = req.ip || 
+                     req.connection.remoteAddress || 
+                     req.socket.remoteAddress ||
+                     (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
+                     'unknown'
+
+    // Create new user (password expected to be base64 encoded)
     const user = await UserModel.create({
       username,
       email,
-      password,
+      password, // Will be processed by the pre-save hook
+      avatar: avatar || undefined,
+      ipAddress,
     })
+
     // Generate token
     const token = generateToken(user)
+
+    // Update user with JWT token
+    user.token = token
+    await user.save()
 
     res.status(201).json({
       message: 'User created successfully',
@@ -33,6 +54,8 @@ export const register = async (req: Request, res: Response) => {
         id: user._id,
         username: user.username,
         email: user.email,
+        ipAddress: user.ipAddress,
+        avatar: user.avatar,
       },
     })
   } catch (error) {
@@ -45,6 +68,13 @@ export const login = async (req: Request, res: Response) => {
   try {
     const { username, password } = req.body
 
+    // Validate input
+    if (!username || !password) {
+      return res
+        .status(400)
+        .json({ message: 'Username and password are required' })
+    }
+
     // Find user
     const user = await UserModel.findOne({ username })
 
@@ -52,14 +82,27 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Invalid credentials' })
     }
 
-    // Check password
+    // Check password (password should be base64 encoded)
     const isMatch = await user.comparePassword(password)
 
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid credentials' })
     }
+
     // Generate token
     const token = generateToken(user)
+
+    // Capture IP address
+    const ipAddress = req.ip || 
+                     req.connection.remoteAddress || 
+                     req.socket.remoteAddress ||
+                     (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
+                     'unknown'
+
+    // Update user with JWT token and IP address
+    user.token = token
+    user.ipAddress = ipAddress
+    await user.save()
 
     res.json({
       message: 'Login successful',
@@ -68,6 +111,8 @@ export const login = async (req: Request, res: Response) => {
         id: user._id,
         username: user.username,
         email: user.email,
+        ipAddress: user.ipAddress,
+        avatar: user.avatar,
       },
     })
   } catch (error) {
@@ -76,9 +121,19 @@ export const login = async (req: Request, res: Response) => {
   }
 }
 
-export const logout = (_req: Request, res: Response) => {
-  // In a token-based auth system, the client is responsible for removing the token
-  res.json({ message: 'Logged out successfully' })
+export const logout = async (req: AuthRequest, res: Response) => {
+  try {
+    // If user is authenticated, clear their token
+    if (req.user) {
+      req.user.token = undefined
+      await req.user.save()
+    }
+    
+    res.json({ message: 'Logged out successfully' })
+  } catch (error) {
+    console.error('Logout error:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
 }
 
 export const getAllUsers = async (_req: Request, res: Response) => {

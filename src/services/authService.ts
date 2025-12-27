@@ -1,59 +1,155 @@
-import jwt from 'jsonwebtoken'
+import crypto from 'crypto'
 import { UserDocument } from '../models/user'
-import mongoose from 'mongoose'
 
 // Get values from environment variables
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
-const JWT_EXPIRE = process.env.JWT_EXPIRE || '1d'
+const TOKEN_SECRET = process.env.TOKEN_SECRET || 'your-secret-key'
+const TOKEN_EXPIRE_HOURS = parseInt(process.env.TOKEN_EXPIRE_HOURS || '24') // Default 24 hours
+
+// CSV delimiter
+const CSV_DELIMITER = ';' // Using semicolon to avoid conflicts with commas in data
 
 /**
- * Interface for decoded JWT token
+ * Interface for decoded CSV token
  */
 export interface DecodedToken {
   id: string
   username: string
   email: string
-  iat?: number
-  exp?: number
+  ipAddress?: string
+  avatar?: string
+  iat: number
+  exp: number
 }
 
 /**
- * Generate JWT token for user authentication
+ * Generate CSV token for user authentication
  * @param user User document from MongoDB
- * @returns JWT token string
+ * @returns Base64 encoded CSV token string
  */
 export const generateToken = (user: UserDocument): string => {
-  // Use user._id.toString() to ensure we have a string representation of the ObjectId
-  const payload = {
-    id: user._id.toString(),
-    username: user.username,
-    email: user.email,
-  }
+  const now = Math.floor(Date.now() / 1000) // Current time in seconds
+  const expireTime = now + (TOKEN_EXPIRE_HOURS * 60 * 60) // Hours to seconds
 
-  return jwt.sign(payload, JWT_SECRET)
+  // Create CSV header (based on User interface fields)
+  const headers = [
+    'id',
+    'username', 
+    'email',
+    'ipAddress',
+    'avatar',
+    'iat',
+    'exp'
+  ]
+
+  // Create CSV data row
+  const data = [
+    user._id.toString(),
+    user.username || '',
+    user.email || '',
+    user.ipAddress || '',
+    user.avatar || '',
+    now.toString(),
+    expireTime.toString()
+  ]
+
+  // Escape any CSV special characters in data
+  const escapedData = data.map(field => {
+    // Handle empty fields
+    if (!field) return ''
+    
+    if (field.includes(CSV_DELIMITER) || field.includes('"') || field.includes('\n') || field.includes('\r')) {
+      return `"${field.replace(/"/g, '""')}"` // Escape quotes by doubling them
+    }
+    return field
+  })
+
+  // Create CSV content
+  const csvContent = headers.join(CSV_DELIMITER) + '\n' + escapedData.join(CSV_DELIMITER)
+  
+  // Simply base64 encode the CSV content (no encryption)
+  return Buffer.from(csvContent).toString('base64') // Final base64 encoding
 }
 
 /**
- * Verify JWT token and return payload if valid
- * @param token JWT token to verify
+ * Verify CSV token and return payload if valid
+ * @param token CSV token to verify
  * @returns Decoded token payload or null if invalid
  */
 export const verifyToken = (token: string): DecodedToken | null => {
   try {
-    return jwt.verify(token, JWT_SECRET) as DecodedToken
-  } catch (error) {
-    // Handle different error types
-    const err = error as Error
-
-    if (err.name === 'TokenExpiredError') {
-      console.error('Token expired')
-    } else if (err.name === 'JsonWebTokenError') {
-      console.error('JWT error:', err.message)
-    } else if (err.name === 'NotBeforeError') {
-      console.error('Token not active yet')
-    } else {
-      console.error('Unknown JWT verification error:', err)
+    // Decode the base64 token to get CSV content
+    const csvContent = Buffer.from(token, 'base64').toString('utf8')
+    
+    // Parse CSV content with proper handling of quoted fields
+    const lines = csvContent.split('\n')
+    if (lines.length < 2) {
+      console.error('Invalid CSV format')
+      return null
     }
+    
+    const headers = lines[0].split(CSV_DELIMITER)
+    
+    // Parse CSV row with proper quote handling
+    const parseCSVRow = (row: string): string[] => {
+      const result: string[] = []
+      let current = ''
+      let inQuotes = false
+      let i = 0
+      
+      while (i < row.length) {
+        const char = row[i]
+        
+        if (char === '"') {
+          if (inQuotes && row[i + 1] === '"') {
+            // Escaped quote
+            current += '"'
+            i += 2
+          } else {
+            // Start or end of quoted field
+            inQuotes = !inQuotes
+            i++
+          }
+        } else if (char === CSV_DELIMITER && !inQuotes) {
+          // Field separator
+          result.push(current)
+          current = ''
+          i++
+        } else {
+          current += char
+          i++
+        }
+      }
+      
+      result.push(current) // Add last field
+      return result
+    }
+    
+    const values = parseCSVRow(lines[1])
+    
+    // Create token object from CSV data
+    const tokenData: any = {}
+    headers.forEach((header, index) => {
+      let value = values[index] || ''
+      
+      // Convert numeric fields
+      if (header === 'iat' || header === 'exp') {
+        tokenData[header] = parseInt(value)
+      } else {
+        tokenData[header] = value || undefined
+      }
+    })
+    
+    // Check expiration
+    const now = Math.floor(Date.now() / 1000)
+    if (tokenData.exp && tokenData.exp < now) {
+      console.error('Token expired')
+      return null
+    }
+    
+    return tokenData as DecodedToken
+  } catch (error) {
+    const err = error as Error
+    console.error('Token verification error:', err.message)
     return null
   }
 }

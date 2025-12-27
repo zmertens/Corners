@@ -1,7 +1,7 @@
 {
   "name": "corners",
-  "version": "1.0.0",
-  "description": "A helper app for maze building and parsing",
+  "version": "1.0.2",
+  "description": "A helper app for maze building",
   "main": "src/app.ts",
   "scripts": {
     "build": "tsc",
@@ -16,7 +16,10 @@
     "prettier:fix": "prettier --write .",
     "format": "npm run prettier:fix && npm run lint:fix",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "seed:dev": "ts-node itests/seedData.ts seed",
+    "verify:db": "ts-node itests/seedData.ts verify",
+    "test:wasm": "ts-node itests/testWasmOptimization.ts"
   },
   "keywords": [
     "node",

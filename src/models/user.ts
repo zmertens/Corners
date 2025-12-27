@@ -7,6 +7,9 @@ export interface User {
   password: string
   resetPasswordToken?: string
   resetPasswordExpires?: Date
+  ipAddress?: string
+  token?: string
+  avatar?: string
   createdAt?: Date
   updatedAt?: Date
 }
@@ -14,6 +17,7 @@ export interface User {
 export interface UserMethods {
   comparePassword(candidatePassword: string): Promise<boolean>
   generatePasswordResetToken(): string
+  setPasswordFromBase64(base64Password: string): void
 }
 
 export interface UserDocument extends User, Document, UserMethods {
@@ -31,6 +35,9 @@ const userSchema = new Schema<UserDocument>(
     password: { type: String, required: true },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
+    ipAddress: { type: String },
+    token: { type: String },
+    avatar: { type: String }, // base64-encoded image
   },
   { timestamps: true }
 )
@@ -40,9 +47,24 @@ userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next()
 
   try {
+    // Check if password is already in base64 format (contains salt:hash)
+    if (this.password.includes(':')) {
+      // Password is already hashed, no need to re-hash
+      return next()
+    }
+
+    // Assume password is base64 encoded, decode and hash it
+    let decodedPassword: string
+    try {
+      decodedPassword = Buffer.from(this.password, 'base64').toString('utf-8')
+    } catch (decodeError) {
+      // If base64 decode fails, treat as plain text
+      decodedPassword = this.password
+    }
+
     const salt = crypto.randomBytes(16).toString('hex')
     const hash = crypto
-      .pbkdf2Sync(this.password, salt, 1000, 64, 'sha512')
+      .pbkdf2Sync(decodedPassword, salt, 1000, 64, 'sha512')
       .toString('hex')
 
     // Store password as salt:hash
@@ -53,20 +75,40 @@ userSchema.pre('save', async function (next) {
   }
 })
 
-// Method to compare passwords
+// Method to compare passwords (handles base64 input)
 userSchema.methods.comparePassword = async function (
   candidatePassword: string
 ): Promise<boolean> {
   try {
     const [salt, hash] = this.password.split(':')
+
+    // Decode base64 password if provided
+    let decodedPassword: string
+    try {
+      decodedPassword = Buffer.from(candidatePassword, 'base64').toString(
+        'utf-8'
+      )
+    } catch (decodeError) {
+      // If base64 decode fails, treat as plain text
+      decodedPassword = candidatePassword
+    }
+
     const candidateHash = crypto
-      .pbkdf2Sync(candidatePassword, salt, 1000, 64, 'sha512')
+      .pbkdf2Sync(decodedPassword, salt, 1000, 64, 'sha512')
       .toString('hex')
     return candidateHash === hash
   } catch (error) {
     console.error('Password comparison error:', error)
     return false
   }
+}
+
+// Method to set password from base64 input
+userSchema.methods.setPasswordFromBase64 = function (
+  base64Password: string
+): void {
+  this.password = base64Password
+  this.markModified('password')
 }
 
 // Generate password reset token

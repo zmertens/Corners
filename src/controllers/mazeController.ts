@@ -2,6 +2,8 @@ import { Request, Response } from 'express'
 import { MazeModel, Maze } from '../models/maze'
 import { AuthRequest } from '../types/index'
 import { UserDocument } from '../models/user'
+import { ScoreModel } from '../models/score'
+import { getWasmModule, isWasmReady } from '../services/wasmLoader'
 
 /**
  * Retrieves all mazes belonging to the authenticated user
@@ -188,104 +190,280 @@ export const deleteMaze = async (
   }
 }
 
+// Interface for maze configuration
+interface MazeConfig {
+  algo?: string
+  seed?: number
+  rows: number
+  columns: number
+  distances?: string
+}
+
+// Interface for maze result
+interface MazeResult {
+  data: string
+  createdAt: string
+  version_str: string
+  config: MazeConfig
+  error?: string
+}
+
 /**
- * Creates a maze using the new API format - accepts algo, seed, rows, columns
- * Returns data as base64 string with timestamp and version
+ * Helper function to generate a single maze from configuration
+ * Uses the pre-loaded WASM module for efficiency
+ */
+const generateSingleMaze = async (
+  config: MazeConfig,
+  wasmModule?: any
+): Promise<MazeResult> => {
+  const { algo = 'binary_tree', seed, rows, columns, distances = '' } = config
+
+  // Validate numeric inputs
+  const numRows = parseInt(rows as any, 10)
+  const numColumns = parseInt(columns as any, 10)
+  const numSeed = seed ? parseInt(seed as any, 10) : undefined
+
+  if (isNaN(numRows) || isNaN(numColumns) || numRows <= 0 || numColumns <= 0) {
+    return {
+      data: '',
+      createdAt: new Date().toISOString(),
+      version_str: '',
+      config,
+      error: 'rows and columns must be positive integers',
+    }
+  }
+
+  try {
+    let mazeData: string | undefined
+    let mazeBuilderCliVersion: string | undefined
+
+    // Use the provided WASM module or get the global one
+    const moduleToUse = wasmModule || getWasmModule()
+
+    if (!moduleToUse || !isWasmReady()) {
+      return {
+        data: '',
+        createdAt: new Date().toISOString(),
+        version_str: '',
+        config,
+        error: 'WASM module not available',
+      }
+    }
+
+    // Use WASM module for maze generation
+    if (moduleToUse.StringVector && moduleToUse.get) {
+      const sv = new moduleToUse.StringVector()
+      sv.push_back('-r')
+      sv.push_back(numRows.toString())
+      sv.push_back('-c')
+      sv.push_back(numColumns.toString())
+
+      sv.push_back('-a')
+      sv.push_back(algo)
+
+      // Add seed parameter if provided
+      if (numSeed !== undefined) {
+        sv.push_back('-s')
+        sv.push_back(numSeed.toString())
+      }
+
+      // Add distances if provided
+      if (distances && distances.length > 0) {
+        console.log(`Adding distances parameter: ${distances}`)
+        sv.push_back('-d')
+        sv.push_back(distances.toString())
+      }
+
+      const cliInstance = moduleToUse.get()
+
+      if (cliInstance && cliInstance.convert_as_base64) {
+        try {
+          mazeData = cliInstance.convert_as_base64(sv)
+          mazeBuilderCliVersion = cliInstance.version
+            ? cliInstance.version()
+            : 'unknown version'
+        } catch (conversionError) {
+          console.error('WASM conversion error:', conversionError)
+          // Try without distances parameter if it's causing issues
+          if (distances && distances.length > 0) {
+            console.log('Retrying without distances parameter...')
+            const svRetry = new moduleToUse.StringVector()
+            svRetry.push_back('-r')
+            svRetry.push_back(numRows.toString())
+            svRetry.push_back('-c')
+            svRetry.push_back(numColumns.toString())
+            svRetry.push_back('-a')
+            svRetry.push_back(algo)
+
+            if (numSeed !== undefined) {
+              svRetry.push_back('-s')
+              svRetry.push_back(numSeed.toString())
+            }
+
+            try {
+              mazeData = cliInstance.convert_as_base64(svRetry)
+              mazeBuilderCliVersion = cliInstance.version
+                ? cliInstance.version()
+                : 'unknown version'
+              console.log('Retry successful without distances parameter')
+            } catch (retryError) {
+              console.error('Retry also failed:', retryError)
+            }
+
+            svRetry.delete()
+          }
+        }
+      }
+
+      // Clean up
+      sv.delete()
+    }
+
+    if (!mazeData) {
+      return {
+        data: '',
+        createdAt: new Date().toISOString(),
+        version_str: '',
+        config,
+        error: `Failed to generate maze with algorithm '${algo}' - WASM module issue`,
+      }
+    }
+
+    return {
+      data: mazeData,
+      createdAt: new Date().toISOString(),
+      version_str: mazeBuilderCliVersion || 'unknown',
+      config,
+    }
+  } catch (wasmError) {
+    console.error('WASM maze generation error:', wasmError)
+    return {
+      data: '',
+      createdAt: new Date().toISOString(),
+      version_str: '',
+      config,
+      error: 'Failed to generate maze',
+    }
+  }
+}
+
+/**
+ * Creates maze(s) using the new API format - accepts single object or array of objects
+ * Returns data as base64 string(s) with timestamp and version
  */
 export const createMazeAPI = async (
   req: AuthRequest,
   res: Response
 ): Promise<void> => {
   try {
-    // Validate request body
-    const { algo = 'binary_tree', seed, rows, columns } = req.body
+    const requestBody = req.body
 
-    if (!rows || !columns) {
+    // Check if request body is an array or single object
+    const isArray = Array.isArray(requestBody)
+    const mazeConfigs: MazeConfig[] = isArray ? requestBody : [requestBody]
+
+    // Validate that we have at least one configuration
+    if (mazeConfigs.length === 0) {
       res.status(400).json({
-        error: 'Missing required parameters: rows and columns',
+        error: 'Request body cannot be empty',
       })
       return
     }
 
-    // Validate numeric inputs
-    const numRows = parseInt(rows as string, 10)
-    const numColumns = parseInt(columns as string, 10)
-    const numSeed = seed ? parseInt(seed as string, 10) : undefined
-
-    if (isNaN(numRows) || isNaN(numColumns) || numRows <= 0 || numColumns <= 0) {
-      res.status(400).json({
-        error: 'rows and columns must be positive integers',
-      })
-      return
-    }
-
-    try {
-      let mazeData: string | undefined
-      let mazeBuilderCliVersion: string | undefined
-
-      // Use WASM module if available on request object
-      if (req.wasmModule) {
-        const wasmModule = req.wasmModule
-        
-        // Check if the module has the expected structure
-        if (wasmModule.StringVector && wasmModule.get) {
-          const sv = new wasmModule.StringVector()
-          sv.push_back('-r')
-          sv.push_back(numRows.toString())
-          sv.push_back('-c')
-          sv.push_back(numColumns.toString())
-          
-          // Add algorithm parameter if supported by WASM
-          if (algo) {
-            sv.push_back('-a')
-            sv.push_back(algo)
-          }
-          
-          // Add seed parameter if provided
-          if (numSeed !== undefined) {
-            sv.push_back('-s')
-            sv.push_back(numSeed.toString())
-          }
-          
-          const cliInstance = wasmModule.get()
-          if (cliInstance && cliInstance.convert_as_base64) {
-            mazeData = cliInstance.convert_as_base64(sv)
-            mazeBuilderCliVersion = cliInstance.version ? cliInstance.version() : "unknown version"
-          }
-          
-          // Clean up
-          sv.delete()
-        } else {
-          console.warn('WASM module missing expected methods (StringVector or get)')
-        }
-      } else {
-        console.warn('WASM module not available on request object')
-      }      if (!mazeData) {
-
-        console.error('Failed to generate maze data - WASM module issue')
-
-        res.status(500).json({ error: 'Failed to generate maze data' })
-
+    // Validate each configuration has required parameters
+    for (let i = 0; i < mazeConfigs.length; i++) {
+      const config = mazeConfigs[i]
+      if (!config.rows || !config.columns) {
+        res.status(400).json({
+          error: `Missing required parameters (rows and columns) in configuration ${i + 1}`,
+        })
         return
       }
-
-      res.status(201).json({
-        data: mazeData,
-        createdAt: new Date().toISOString(),
-        version_str: mazeBuilderCliVersion,
-      })
-
-    } catch (wasmError) {
-
-      console.error('WASM maze generation error:', wasmError)
-
-      res.status(500).json({ error: 'Failed to generate maze' })
     }
+
+    // Check WASM module availability - use global module or fallback to request module
+    const wasmModule = getWasmModule() || req.wasmModule
+
+    if (!wasmModule || (!isWasmReady() && !req.wasmModule)) {
+      console.warn('WASM module not available')
+      const errorResponse = isArray
+        ? mazeConfigs.map((config) => ({
+            data: '',
+            createdAt: new Date().toISOString(),
+            version_str: '',
+            config,
+            error: 'WASM module not available',
+          }))
+        : {
+            data: '',
+            createdAt: new Date().toISOString(),
+            version_str: '',
+            config: mazeConfigs[0],
+            error: 'WASM module not available',
+          }
+
+      res.status(500).json(errorResponse)
+      return
+    }
+
+    // Generate mazes for all configurations
+    const results: MazeResult[] = []
+    for (const config of mazeConfigs) {
+      const result = await generateSingleMaze(config, wasmModule)
+      results.push(result)
+    }
+
+    // Check if any generation failed
+    const hasErrors = results.some((result) => result.error)
+    if (hasErrors) {
+      // Return results with errors marked
+      const response = isArray ? results : results[0]
+      res.status(207).json(response)
+      return
+    }
+
+    // Return successful results
+    const response = isArray ? results : results[0]
+    res.status(201).json(response)
   } catch (error) {
-
     console.error('Create maze API error:', error)
-
     res.status(500).json({ error: 'Server error' })
+  }
+}
+
+/**
+ * Get maze scores with optional query parameters
+ * Query parameters:
+ * - limit: number (optional, default: 20, max: 100)
+ * Public endpoint - does not require authentication
+ */
+export const getMazeScores = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 100)
+
+    const scores = await ScoreModel.find({})
+      .limit(limit)
+      .sort({ score: -1, createdAt: -1 }) // Order by highest score first, then most recent
+      .select('score maze goal aliases createdAt')
+
+    const responseData = scores.map((score) => ({
+      score: score.score,
+      maze: score.maze, // base64 string
+      goal: score.goal, // { start: string, steps: number }
+      aliases: score.aliases, // list of strings
+      createdAt: score.createdAt,
+    }))
+
+    res.json({
+      count: responseData.length,
+      scores: responseData,
+    })
+  } catch (error) {
+    console.error('Get maze scores error:', error)
+    res.status(500).json({ message: 'Server error' })
   }
 }
 
@@ -298,13 +476,14 @@ export const getHelp = async (
 ): Promise<void> => {
   try {
     let mazeBuilderHelp = 'WASM module help not available'
-    
-    // Get help string from WASM module
-    if (req.wasmModule) {
+
+    // Get help string from the global WASM module first, then fallback to request module
+    const wasmModule = getWasmModule() || req.wasmModule
+
+    if (wasmModule && isWasmReady()) {
       try {
-        const wasmModule = req.wasmModule
         const cliInstance = wasmModule.get()
-        
+
         if (cliInstance && cliInstance.help) {
           mazeBuilderHelp = cliInstance.help()
         }
@@ -312,16 +491,16 @@ export const getHelp = async (
         console.error('Error getting WASM help:', wasmError)
       }
     } else {
-      console.warn('WASM module not available on request object')
+      console.warn('WASM module not available for help')
     }
-    
+
     // Get package info
     const packageInfo = require('../../package.json')
     const cornersInfo = `${packageInfo.name} v${packageInfo.version} - ${packageInfo.description}`
-    
+
     res.json({
       maze_builder_help: mazeBuilderHelp,
-      corners_info: cornersInfo
+      corners_info: cornersInfo,
     })
   } catch (error) {
     console.error('Get help error:', error)

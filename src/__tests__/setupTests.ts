@@ -28,6 +28,43 @@ jest.mock('dotenv', () => ({
   config: jest.fn(),
 }))
 
+// Mock the service files to prevent dependency issues
+jest.mock('../services/wasmLoader', () => ({
+  getWasmModule: jest.fn().mockReturnValue(null),
+  isWasmReady: jest.fn().mockReturnValue(false),
+  initializeWasm: jest.fn(),
+  loadWasm: jest.fn(),
+}))
+
+// Mock the model files to prevent schema creation issues
+jest.mock('../models/alias', () => ({
+  AliasModel: {
+    find: jest.fn(),
+    findOne: jest.fn(),
+    create: jest.fn(),
+    countDocuments: jest.fn(),
+  },
+}))
+
+jest.mock('../models/score', () => ({
+  ScoreModel: {
+    find: jest.fn(),
+    findOne: jest.fn(),
+    create: jest.fn(),
+    countDocuments: jest.fn(),
+  },
+}))
+
+jest.mock('../models/user', () => ({
+  UserModel: {
+    find: jest.fn(),
+    findOne: jest.fn(),
+    findById: jest.fn(),
+    create: jest.fn(),
+    countDocuments: jest.fn(),
+  },
+}))
+
 // Mock process.env
 process.env.JWT_SECRET = 'test_secret_key'
 process.env.PORT = '3000'
@@ -49,21 +86,33 @@ jest.mock('mongoose', () => {
     updatedAt: new Date(),
   }
 
+  // Mock Schema constructor with proper methods and Types
+  function MockSchema(definition: any, options: any) {
+    const schemaInstance = {
+      pre: jest.fn().mockReturnThis(),
+      virtual: jest.fn().mockReturnThis(),
+      set: jest.fn().mockReturnThis(),
+      index: jest.fn().mockReturnThis(),
+      methods: {},
+      statics: {},
+      definition,
+      options,
+    }
+    return schemaInstance
+  }
+
+  // Add Schema.Types static property
+  ;(MockSchema as any).Types = {
+    ObjectId: 'ObjectId',
+  }
+
   return {
     connect: jest.fn().mockResolvedValue(undefined),
     connection: {
       once: jest.fn(),
       on: jest.fn(),
     },
-    Schema: jest.fn().mockImplementation((definition, options) => {
-      return {
-        pre: jest.fn().mockReturnThis(),
-        virtual: jest.fn().mockReturnThis(),
-        set: jest.fn().mockReturnThis(),
-        definition,
-        options,
-      }
-    }),
+    Schema: MockSchema,
     model: jest.fn().mockImplementation((name) => {
       return {
         find: jest.fn().mockResolvedValue([{ ...mockDocument }]),

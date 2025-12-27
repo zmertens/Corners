@@ -1,34 +1,36 @@
 import { Request, Response, NextFunction } from 'express'
-import { getWasmModule } from '../services/wasmLoader'
+import { getWasmModule, isWasmReady } from '../services/wasmLoader'
 import { AuthRequest } from '../types'
 
 /**
- * Middleware that attaches the WASM instance to the request object
- * This ensures the WASM instance is available for all routes that need it
+ * Middleware that attaches the pre-loaded WASM instance to the request object
+ * This middleware is lightweight since the WASM module is already loaded during startup
  */
-export const wasmMiddleware = async (
+export const wasmMiddleware = (
   req: AuthRequest,
   res: Response,
   next: NextFunction
-): Promise<void> => {
+): void => {
   try {
-    // Get or initialize WASM instance
-    const mod = await getWasmModule()
+    // Get the already-loaded WASM instance (no async loading here)
+    const mod = getWasmModule()
 
-    if (!mod) {
-      console.warn('WASM middleware: Failed to load WASM module')
+    if (!mod || !isWasmReady()) {
+      // Only log warning if WASM is expected but not available
+      if (process.env.NODE_ENV !== 'test') {
+        console.warn('⚠️ WASM module not available for request')
+      }
+      req.wasmModule = undefined
     } else {
-      console.log('WASM middleware: Module loaded successfully, attaching to request')
-      console.log('WASM middleware: Available methods:', Object.keys(mod))
+      // Silently attach the WASM module - no verbose logging
+      req.wasmModule = mod
     }
-
-    // Attach the instance to the request object
-    req.wasmModule = mod === null ? undefined : mod
 
     next()
   } catch (error) {
     console.error('WASM middleware error:', error)
-    // Continue even if WASM fails to load
+    req.wasmModule = undefined
+    // Continue even if WASM fails
     next()
   }
 }

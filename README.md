@@ -1,31 +1,112 @@
 # Corners
 
-Corners is a Node.js and Express web application that provides endpoints for creating mazes.
+Corners is a Node.js and Express web application that provides authentication services and endpoints for creating mazes and managing user scores.
 
-- POST or PUT `/api/mazes/create`
+### API Endpoints
+
+#### POST/PUT `/api/mazes/create`
+
+Create a maze (public endpoint).
+
+**Request Body:**
 
 ```json
 {
   "algo": "binary_tree",
   "seed": 10,
   "rows": 100,
-  "columns": 100
+  "columns": 100,
+  "distances": "optional_string"
 }
 ```
 
+**Response:**
+
+```json
+{
+  "data": "base64_maze_data",
+  "createdAt": "2024-01-01T00:00:00.000Z",
+  "version_str": "maze_builder_version",
+  "config": {
+    "algo": "binary_tree",
+    "seed": 10,
+    "rows": 100,
+    "columns": 100
+  }
+}
+```
+
+#### GET `/api/mazes/scores`
+
+Get maze scores (public endpoint).
+
+**Query Parameters:**
+
+- `limit` (optional): Number of results (default: 20, max: 100)
+
+**Response:**
+
+```json
+{
+  "count": 2,
+  "scores": [
+    {
+      "score": 100,
+      "maze": "base64_maze_string",
+      "goal": {
+        "start": "0,0",
+        "steps": 10
+      },
+      "aliases": ["alias1", "alias2"],
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+#### POST `/api/mazes/scores`
+
+Create a new score entry (public endpoint).
+
+**Request Body:**
+
+```json
+{
+  "score": 100,
+  "maze": "base64_maze_string",
+  "goal": {
+    "start": "0,0",
+    "steps": 10
+  },
+  "aliases": ["alias1", "alias2"]
+}
+```
+
+#### PUT `/api/mazes/scores/:id`
+
+Update an existing score (requires authentication, user can only update their own scores).
+
+#### GET `/api/user/scores`
+
+Get scores for authenticated user (requires authentication).
+
+### Other Endpoints
+
+#### GET `/api/help`
+
+Get help information for the API and WASM module.
+
 ## Features
 
-- RESTful API `/api/mazes/`
-
-- Integration with MongoDB for data storage
-- Integration with the [Maze Builder](https://github.com/zmertens/MazeBuilder) WebAssembly module
-
+- **Authentication System**: JWT-based authentication with base64 password support
+- **User Aliases**: Create and manage user aliases for score tracking
+- **Score Management**: Track and update maze completion scores
+- **RESTful API**: Comprehensive REST API for all operations
+- **Integration with MongoDB**: Persistent data storage
+- **Integration with [Maze Builder](https://github.com/zmertens/MazeBuilder) WebAssembly module**:
   - Efficient JavaScript layer around a C++ library
   - Provides maze-generating functions
-
-- @TODO Socket based UDP connections for real-time data transfers
-
-- @TODO CRON job that works to provide maze data automatically
+- **Public and Authenticated Endpoints**: Mixed access levels for different features
 
 ## Setup Instructions
 

@@ -83,6 +83,8 @@ jest.mock('../services/wasmLoader', () => ({
       calledRun: true,
     })
   }),
+  initializeWasm: jest.fn().mockImplementation(() => Promise.resolve()),
+  isWasmReady: jest.fn().mockReturnValue(true),
   getWasmModule: jest.fn().mockImplementation(() => {
     const mockStringVector = jest.fn().mockImplementation(() => ({
       push_back: jest.fn(),
@@ -149,11 +151,17 @@ describe('Express App', () => {
     expect(mockApp.use).toHaveBeenCalledWith('urlencoded-middleware')
   })
 
-  it('should start the server on the defined port', () => {
+  it('should start the server on the defined port', async () => {
     // Import app to trigger initialization
+    let startServer: Function
     jest.isolateModules(() => {
-      require('../app')
+      const appModule = require('../app')
+      // Get the startServer function
+      startServer = appModule.startServer
     })
+
+    // Call startServer explicitly
+    await startServer!()
 
     // Verify the server was started
     expect(mockApp.listen).toHaveBeenCalled()
@@ -170,14 +178,14 @@ describe('Express App', () => {
   it('should initialize WASM module without errors', async () => {
     // Get the mock before importing the app
     const { getWasmModule } = require('../services/wasmLoader')
-    
+
     // Import app to trigger initialization
     jest.isolateModules(() => {
       require('../app')
     })
 
     // Wait a bit for async WASM initialization
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise((resolve) => setTimeout(resolve, 100))
 
     // The test passes if no errors were thrown during app initialization
     // WASM mock is working if we see the console logs showing successful initialization
