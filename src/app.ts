@@ -53,10 +53,7 @@ const initializeApp = async () => {
           if (cliInstance) {
             // Quick test
             const params = new module.StringVector()
-            params.push_back('-r')
-            params.push_back('5')
-            params.push_back('-c')
-            params.push_back('5')
+            params.push_back('--help')
             const testMaze = cliInstance.convert(params)
             console.log(testMaze)
             params.delete()
