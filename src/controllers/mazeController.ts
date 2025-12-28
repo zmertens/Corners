@@ -29,6 +29,7 @@ export const getUserMazes = async (
         id: maze.id,
         rows: maze.rows,
         columns: maze.columns,
+        distances: maze.distances,
         algorithm: maze.algorithm,
         createdAt: maze.createdAt,
       })),
@@ -66,6 +67,7 @@ export const getMazeById = async (
       data: maze.data,
       rows: maze.rows,
       columns: maze.columns,
+      distances: maze.distances,
       algorithm: maze.algorithm,
       createdAt: maze.createdAt,
     })
@@ -132,6 +134,7 @@ export const updateMaze = async (
         data: maze.data,
         rows: maze.rows,
         columns: maze.columns,
+        distances: maze.distances,
         algorithm: maze.algorithm,
         updatedAt: maze.updatedAt,
       },
@@ -261,17 +264,15 @@ const generateSingleMaze = async (
       sv.push_back('-a')
       sv.push_back(algo)
 
-      // Add seed parameter if provided
       if (numSeed !== undefined) {
         sv.push_back('-s')
         sv.push_back(numSeed.toString())
       }
 
-      // Add distances if provided
-      if (distances && distances.length > 0) {
+      if (distances !== '') {
         console.log(`Adding distances parameter: ${distances}`)
         sv.push_back('-d')
-        sv.push_back(distances.toString())
+        sv.push_back(distances)
       }
 
       const cliInstance = moduleToUse.get()
@@ -284,34 +285,6 @@ const generateSingleMaze = async (
             : 'unknown version'
         } catch (conversionError) {
           console.error('WASM conversion error:', conversionError)
-          // Try without distances parameter if it's causing issues
-          if (distances && distances.length > 0) {
-            console.log('Retrying without distances parameter...')
-            const svRetry = new moduleToUse.StringVector()
-            svRetry.push_back('-r')
-            svRetry.push_back(numRows.toString())
-            svRetry.push_back('-c')
-            svRetry.push_back(numColumns.toString())
-            svRetry.push_back('-a')
-            svRetry.push_back(algo)
-
-            if (numSeed !== undefined) {
-              svRetry.push_back('-s')
-              svRetry.push_back(numSeed.toString())
-            }
-
-            try {
-              mazeData = cliInstance.convert_as_base64(svRetry)
-              mazeBuilderCliVersion = cliInstance.version
-                ? cliInstance.version()
-                : 'unknown version'
-              console.log('Retry successful without distances parameter')
-            } catch (retryError) {
-              console.error('Retry also failed:', retryError)
-            }
-
-            svRetry.delete()
-          }
         }
       }
 

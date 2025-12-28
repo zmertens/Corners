@@ -3,7 +3,7 @@
     "target": "ES6",
     "module": "nodenext",
     "outDir": "./dist",
-    "rootDir": ".",
+    "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -11,12 +11,8 @@
     "isolatedModules": true
   },
   "include": [
-    "src/**/*",
-    "src/config",
-    "public/mazebuildercli.d.ts",
-    "itests/testWasmOptimization.ts",
-    "itests/seedData.ts"
+    "src/**/*"
   ],
-  "exclude": ["node_modules", "**/*.spec.ts"],
+  "exclude": ["node_modules", "**/*.spec.ts", "**/*.test.ts"],
   "typeRoots": ["./node_modules/@types", "./src/types"]
 }

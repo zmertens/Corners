@@ -5,6 +5,7 @@ export interface Maze {
   data: string
   rows: number
   columns: number
+  distances: string
   algorithm: string
   user: mongoose.Types.ObjectId
   createdAt?: Date
@@ -22,6 +23,7 @@ const mazeSchema = new Schema<MazeDocument>(
     data: { type: String, required: true },
     rows: { type: Number, required: true },
     columns: { type: Number, required: true },
+    distances: { type: String, required: false },
     algorithm: { type: String, required: true },
     user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   },
