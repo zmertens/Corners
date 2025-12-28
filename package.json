@@ -38,8 +38,7 @@
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.13.2",
-    "typescript": "^5.0.0"
+    "mongoose": "^8.13.2"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
@@ -50,6 +49,7 @@
     "prettier": "^3.5.3",
     "supertest": "^7.1.0",
     "ts-jest": "^29.3.2",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.0.0"
   }
 }
