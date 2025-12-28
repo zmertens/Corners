@@ -271,7 +271,8 @@ const generateSingleMaze = async (
 
       if (distances !== '') {
         console.log(`Adding distances parameter: ${distances}`)
-        sv.push_back('-d' + distances)
+        sv.push_back('-d')
+        sv.push_back(distances)
       }
 
       const cliInstance = moduleToUse.get()
