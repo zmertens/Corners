@@ -1,106 +1,10 @@
 # Corners
 
-Corners is a Node.js and Express web application that provides authentication services and endpoints for creating mazes and managing user scores.
-
-### API Endpoints
-
-#### POST/PUT `/api/mazes/create`
-
-Create a maze (public endpoint).
-
-**Request Body:**
-
-```json
-{
-  "algo": "binary_tree",
-  "seed": 10,
-  "rows": 100,
-  "columns": 100,
-  "distances": "optional_string"
-}
-```
-
-**Response:**
-
-```json
-{
-  "data": "base64_maze_data",
-  "createdAt": "2024-01-01T00:00:00.000Z",
-  "version_str": "maze_builder_version",
-  "config": {
-    "algo": "binary_tree",
-    "seed": 10,
-    "rows": 100,
-    "columns": 100
-  }
-}
-```
-
-#### GET `/api/mazes/scores`
-
-Get maze scores (public endpoint).
-
-**Query Parameters:**
-
-- `limit` (optional): Number of results (default: 20, max: 100)
-
-**Response:**
-
-```json
-{
-  "count": 2,
-  "scores": [
-    {
-      "score": 100,
-      "maze": "base64_maze_string",
-      "goal": {
-        "start": "0,0",
-        "steps": 10
-      },
-      "aliases": ["alias1", "alias2"],
-      "createdAt": "2024-01-01T00:00:00.000Z"
-    }
-  ]
-}
-```
-
-#### POST `/api/mazes/scores`
-
-Create a new score entry (public endpoint).
-
-**Request Body:**
-
-```json
-{
-  "score": 100,
-  "maze": "base64_maze_string",
-  "goal": {
-    "start": "0,0",
-    "steps": 10
-  },
-  "aliases": ["alias1", "alias2"]
-}
-```
-
-#### PUT `/api/mazes/scores/:id`
-
-Update an existing score (requires authentication, user can only update their own scores).
-
-#### GET `/api/user/scores`
-
-Get scores for authenticated user (requires authentication).
-
-### Other Endpoints
-
-#### GET `/api/help`
-
-Get help information for the API and WASM module.
+Corners is a Node.js and Express web application that provides authentication and maze creation services.
 
 ## Features
 
 - **Authentication System**: JWT-based authentication with base64 password support
-- **User Aliases**: Create and manage user aliases for score tracking
-- **Score Management**: Track and update maze completion scores
 - **RESTful API**: Comprehensive REST API for all operations
 - **Integration with MongoDB**: Persistent data storage
 - **Integration with [Maze Builder](https://github.com/zmertens/MazeBuilder) WebAssembly module**:
@@ -129,7 +33,7 @@ Get help information for the API and WASM module.
 4. **Run the application:**
 
    ```
-   npm start
+   npm run dev
    ```
 
 5. **Access the API:**
