@@ -25,11 +25,12 @@ export const register = async (req: Request, res: Response) => {
     }
 
     // Capture IP address
-    const ipAddress = req.ip || 
-                     req.connection.remoteAddress || 
-                     req.socket.remoteAddress ||
-                     (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
-                     'unknown'
+    const ipAddress =
+      req.ip ||
+      req.connection.remoteAddress ||
+      req.socket.remoteAddress ||
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
+      'unknown'
 
     // Create new user (password expected to be base64 encoded)
     const user = await UserModel.create({
@@ -93,11 +94,12 @@ export const login = async (req: Request, res: Response) => {
     const token = generateToken(user)
 
     // Capture IP address
-    const ipAddress = req.ip || 
-                     req.connection.remoteAddress || 
-                     req.socket.remoteAddress ||
-                     (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
-                     'unknown'
+    const ipAddress =
+      req.ip ||
+      req.connection.remoteAddress ||
+      req.socket.remoteAddress ||
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
+      'unknown'
 
     // Update user with JWT token and IP address
     user.token = token
@@ -128,7 +130,7 @@ export const logout = async (req: AuthRequest, res: Response) => {
       req.user.token = undefined
       await req.user.save()
     }
-    
+
     res.json({ message: 'Logged out successfully' })
   } catch (error) {
     console.error('Logout error:', error)

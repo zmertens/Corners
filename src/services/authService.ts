@@ -28,17 +28,17 @@ export interface DecodedToken {
  */
 export const generateToken = (user: UserDocument): string => {
   const now = Math.floor(Date.now() / 1000) // Current time in seconds
-  const expireTime = now + (TOKEN_EXPIRE_HOURS * 60 * 60) // Hours to seconds
+  const expireTime = now + TOKEN_EXPIRE_HOURS * 60 * 60 // Hours to seconds
 
   // Create CSV header (based on User interface fields)
   const headers = [
     'id',
-    'username', 
+    'username',
     'email',
     'ipAddress',
     'avatar',
     'iat',
-    'exp'
+    'exp',
   ]
 
   // Create CSV data row
@@ -49,23 +49,29 @@ export const generateToken = (user: UserDocument): string => {
     user.ipAddress || '',
     user.avatar || '',
     now.toString(),
-    expireTime.toString()
+    expireTime.toString(),
   ]
 
   // Escape any CSV special characters in data
-  const escapedData = data.map(field => {
+  const escapedData = data.map((field) => {
     // Handle empty fields
     if (!field) return ''
-    
-    if (field.includes(CSV_DELIMITER) || field.includes('"') || field.includes('\n') || field.includes('\r')) {
+
+    if (
+      field.includes(CSV_DELIMITER) ||
+      field.includes('"') ||
+      field.includes('\n') ||
+      field.includes('\r')
+    ) {
       return `"${field.replace(/"/g, '""')}"` // Escape quotes by doubling them
     }
     return field
   })
 
   // Create CSV content
-  const csvContent = headers.join(CSV_DELIMITER) + '\n' + escapedData.join(CSV_DELIMITER)
-  
+  const csvContent =
+    headers.join(CSV_DELIMITER) + '\n' + escapedData.join(CSV_DELIMITER)
+
   // Simply base64 encode the CSV content (no encryption)
   return Buffer.from(csvContent).toString('base64') // Final base64 encoding
 }
@@ -79,26 +85,26 @@ export const verifyToken = (token: string): DecodedToken | null => {
   try {
     // Decode the base64 token to get CSV content
     const csvContent = Buffer.from(token, 'base64').toString('utf8')
-    
+
     // Parse CSV content with proper handling of quoted fields
     const lines = csvContent.split('\n')
     if (lines.length < 2) {
       console.error('Invalid CSV format')
       return null
     }
-    
+
     const headers = lines[0].split(CSV_DELIMITER)
-    
+
     // Parse CSV row with proper quote handling
     const parseCSVRow = (row: string): string[] => {
       const result: string[] = []
       let current = ''
       let inQuotes = false
       let i = 0
-      
+
       while (i < row.length) {
         const char = row[i]
-        
+
         if (char === '"') {
           if (inQuotes && row[i + 1] === '"') {
             // Escaped quote
@@ -119,18 +125,18 @@ export const verifyToken = (token: string): DecodedToken | null => {
           i++
         }
       }
-      
+
       result.push(current) // Add last field
       return result
     }
-    
+
     const values = parseCSVRow(lines[1])
-    
+
     // Create token object from CSV data
     const tokenData: any = {}
     headers.forEach((header, index) => {
       let value = values[index] || ''
-      
+
       // Convert numeric fields
       if (header === 'iat' || header === 'exp') {
         tokenData[header] = parseInt(value)
@@ -138,14 +144,14 @@ export const verifyToken = (token: string): DecodedToken | null => {
         tokenData[header] = value || undefined
       }
     })
-    
+
     // Check expiration
     const now = Math.floor(Date.now() / 1000)
     if (tokenData.exp && tokenData.exp < now) {
       console.error('Token expired')
       return null
     }
-    
+
     return tokenData as DecodedToken
   } catch (error) {
     const err = error as Error

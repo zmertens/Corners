@@ -4,6 +4,7 @@ import * as authController from '../controllers/authController'
 import * as mazeController from '../controllers/mazeController'
 import * as aliasController from '../controllers/aliasController'
 import * as scoreController from '../controllers/scoreController'
+import * as networkController from '../controllers/networkController'
 
 const setNavigations = (app: Application) => {
   // Base route
@@ -64,6 +65,27 @@ const setNavigations = (app: Application) => {
   // Maze scores routes (public endpoint)
   app.get('/api/mazes/scores', (req, res, next) => {
     Promise.resolve(mazeController.getMazeScores(req, res)).catch(next)
+  })
+
+  // Network discovery routes
+  app.get('/mazes/networks/data', (req, res, next) => {
+    Promise.resolve(networkController.getNetworkData(req, res)).catch(next)
+  })
+
+  app.post('/mazes/networks/data', (req, res, next) => {
+    Promise.resolve(networkController.registerNetworkPlayer(req, res)).catch(
+      next
+    )
+  })
+
+  app.get('/api/mazes/networks/data', (req, res, next) => {
+    Promise.resolve(networkController.getNetworkData(req, res)).catch(next)
+  })
+
+  app.post('/api/mazes/networks/data', (req, res, next) => {
+    Promise.resolve(networkController.registerNetworkPlayer(req, res)).catch(
+      next
+    )
   })
 
   // Score management routes

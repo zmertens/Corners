@@ -1,7 +1,12 @@
 import { Request, Response } from 'express'
-import { ScoreModel, ScoreDocument } from '../models/score'
 import { AuthRequest } from '../types'
 import { UserDocument } from '../models/user'
+import {
+  fetchScores,
+  createScoreEntry,
+  updateScoreEntry,
+  fetchUserScores,
+} from '../services/scoreService'
 
 /**
  * Get scores with optional query parameters
@@ -13,10 +18,7 @@ export const getScores = async (req: Request, res: Response): Promise<void> => {
   try {
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 100)
 
-    const scores = await ScoreModel.find({})
-      .limit(limit)
-      .sort({ score: -1, createdAt: -1 }) // Order by highest score first, then most recent
-      .select('score maze goal aliases createdAt')
+    const scores = await fetchScores(limit)
 
     const responseData = scores.map((score) => ({
       score: score.score,
@@ -103,7 +105,13 @@ export const createScore = async (
       scoreData.user = user._id
     }
 
-    const newScore = await ScoreModel.create(scoreData)
+    const newScore = await createScoreEntry({
+      score: scoreData.score,
+      maze: scoreData.maze,
+      goal: scoreData.goal,
+      aliases: scoreData.aliases,
+      userId: scoreData.user,
+    })
 
     res.status(201).json({
       message: 'Score created successfully',
@@ -147,27 +155,13 @@ export const updateScore = async (
       return
     }
 
-    const existingScore = await ScoreModel.findOne({
-      _id: scoreId,
-      user: user._id, // Only allow users to update their own scores
-    })
-
-    if (!existingScore) {
-      res
-        .status(404)
-        .json({ message: 'Score not found or not authorized to update' })
-      return
-    }
-
     const { score, maze, goal, aliases } = req.body
 
-    // Update fields if provided
     if (score !== undefined) {
       if (typeof score !== 'number' || score < 0) {
         res.status(400).json({ message: 'Score must be a non-negative number' })
         return
       }
-      existingScore.score = score
     }
 
     if (maze !== undefined) {
@@ -175,7 +169,6 @@ export const updateScore = async (
         res.status(400).json({ message: 'Maze data must be a string' })
         return
       }
-      existingScore.maze = maze
     }
 
     if (goal !== undefined) {
@@ -189,10 +182,6 @@ export const updateScore = async (
             'Goal object with start (string) and steps (number) is required',
         })
         return
-      }
-      existingScore.goal = {
-        start: goal.start.toString(),
-        steps: parseInt(goal.steps, 10),
       }
     }
 
@@ -212,11 +201,30 @@ export const updateScore = async (
           .json({ message: 'All aliases must be non-empty strings' })
         return
       }
-
-      existingScore.aliases = aliases.map((alias: string) => alias.trim())
     }
 
-    await existingScore.save()
+    const existingScore = await updateScoreEntry(scoreId, user._id, {
+      score,
+      maze,
+      goal:
+        goal !== undefined
+          ? {
+              start: goal.start.toString(),
+              steps: parseInt(goal.steps, 10),
+            }
+          : undefined,
+      aliases:
+        aliases !== undefined
+          ? aliases.map((alias: string) => alias.trim())
+          : undefined,
+    })
+
+    if (!existingScore) {
+      res
+        .status(404)
+        .json({ message: 'Score not found or not authorized to update' })
+      return
+    }
 
     res.json({
       message: 'Score updated successfully',
@@ -251,10 +259,7 @@ export const getUserScores = async (
     const user = req.user as UserDocument
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 100)
 
-    const scores = await ScoreModel.find({ user: user._id })
-      .limit(limit)
-      .sort({ score: -1, createdAt: -1 })
-      .select('score maze goal aliases createdAt updatedAt')
+    const scores = await fetchUserScores(user._id, limit)
 
     const responseData = scores.map((score) => ({
       id: score._id,

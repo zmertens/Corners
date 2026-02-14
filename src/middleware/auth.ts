@@ -33,7 +33,9 @@ export const authenticate = async (
     // Verify that the token matches the one stored in the user model
     // This provides additional security by ensuring the token hasn't been revoked
     if (user.token !== token) {
-      return res.status(401).json({ message: 'Token has been revoked or expired' })
+      return res
+        .status(401)
+        .json({ message: 'Token has been revoked or expired' })
     }
 
     // Set user in request object
